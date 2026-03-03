@@ -8,6 +8,7 @@ Track delivery in `docs/CODEX_TASK.md` as a living versioned checklist.
 - Completed: Phase 0 scaffold and baseline setup.
 - Completed: Phase 1 core data model (migrations, schemas, owner invariants, validation tests).
 - Completed: Phase 2 token/auth core services (JWT, refresh token rotation/reuse detection, rate limiting primitives).
+- Completed: Phase 2.1 review-driven hardening adjustments.
 - Completed checks: `mix deps.get`, `mix ecto.create`, `mix test`.
 - In progress next: Phase 3 (Accounts/Auth business flows built on top of token services).
 
@@ -46,6 +47,42 @@ Track delivery in `docs/CODEX_TASK.md` as a living versioned checklist.
 - OpenAPI contract for core platform endpoints only.
 - Fail-fast startup config validation (DB/JWT/refresh/OAuth/Oban essentials).
 - API lifecycle conventions with `/api/v1` namespace policy.
+
+## Phase 2.1 Review-Driven Adjustments (Before Phase 3)
+- Add password hashing dependency and wire fixtures/helpers to use real password hashes.
+- Switch refresh token hashing from `sha256(raw <> pepper)` to HMAC-SHA256.
+- Tighten email validation and add boundary/edge-case tests.
+- Add stricter access-token claim type validation and tests.
+- Add `(user_id, provider)` index for `identities` before auth lookup paths are added.
+- Update router namespace to `/api/v1` before endpoint implementation begins.
+- Tighten refresh token schema validation:
+  - `token_hash` must be exact SHA-256 hex length.
+  - `expires_at` must be in the future.
+- Add `ConnCase` auth helper (`conn_with_token/2`) before Phase 4 controller tests.
+- Document security/auth decisions in `docs/DECISIONS.md`:
+  - password hashing algorithm
+  - refresh token transport choice
+  - JWT algorithm rationale
+  - OpenAPI tooling choice
+
+## Review Items Integrated Into Future Phases
+- Phase 3:
+  - Phase 3 preamble / review-closure tasks:
+    - optimize `owner_count_for_update/1` query path (or document/justify lock strategy with evidence)
+    - add explicit `RateLimiter.reset/0` behavior test
+    - expand membership invariant tests (non-owner delete, member->owner promote, invalid role update rejection)
+    - add targeted test ensuring `demoting_last_owner?/2` avoids owner-count query for non-owner memberships
+    - preamble gate: tests pass, full `mix test` green, and M1/M7/M8/L1 explicitly marked addressed in tracker
+  - define idempotent revoked-token behavior expectations in auth context (`revoke` semantics)
+  - confirm reuse-detection return contract with context-level tests
+- Phase 4:
+  - rely on `conn_with_token/2` for authenticated controller coverage
+  - add wrong-issuer and malformed-token request coverage through plugs/controllers
+- Phase 6:
+  - add Oban dependency/supervision and cleanup worker implementation
+  - enforce fail-fast startup validation for JWT/refresh secrets (production-safe guardrails)
+- Phase 7:
+  - close remaining schema/token/rate-limit edge-case tests from review not already completed in earlier phases
 
 ## v0.2 Scope (Planned Next)
 - Observability expansion (metrics/traces packaging).

@@ -93,15 +93,34 @@ Acceptance gate:
 - [x] rate-limit behavior tests
 - [x] `mix test`
 
-### Pre-Phase 3: Code Review
+### Phase 2.1: Review-Driven Hardening (Before Phase 3)
 
-Review `REVIEW.md` before starting Phase 3. Priority items to address first:
-- Add password hashing library to `mix.exs` (blocks login flow)
-- Fix router scope from `/api` to `/api/v1`
-- Switch refresh token pepper to HMAC (`crypto.mac/4`)
-- Add `conn_with_token/2` helper to `ConnCase` (needed for Phase 4 tests)
+- [x] Apply required pre-Phase 3 adjustments from `docs/REVIEW.md`:
+  - [x] add password hashing dependency and wire test fixtures to generate real password hashes
+  - [x] switch refresh-token hashing from concatenation to HMAC (`:crypto.mac/4`)
+  - [x] tighten email validation and add boundary/edge-case tests
+  - [x] add explicit JWT claim type validation/coercion tests
+  - [x] add `identities(user_id, provider)` index for auth lookup path
+  - [x] update router namespace to `/api/v1`
+  - [x] tighten refresh-token changeset rules:
+    - [x] enforce exact hash length for SHA-256 hex
+    - [x] reject already-expired `expires_at`
+  - [x] add `conn_with_token/2` (or equivalent) helper in `ConnCase`
+  - [x] document security/auth/tooling decisions in `docs/DECISIONS.md`
+
+Acceptance gate:
+- [x] focused tests for all 2.1 adjustments pass
+- [x] full `mix test`
 
 ### Phase 3: Accounts/Auth Contexts
+- [ ] Phase 3 preamble / review-closure tasks (must complete before auth flow implementation):
+  - [ ] Optimize `owner_count_for_update/1` query path (or explicitly document and justify current lock strategy with evidence).
+  - [ ] Add explicit `RateLimiter.reset/0` behavioral test (state cleared and buckets reset).
+  - [ ] Expand membership invariant tests:
+    - [ ] deleting non-owner membership succeeds
+    - [ ] promoting member to owner succeeds when valid
+    - [ ] invalid role update rejected at changeset boundary
+  - [ ] Add targeted test proving `demoting_last_owner?/2` does not trigger owner-count query for non-owner memberships.
 - [ ] Implement Accounts context operations for memberships and account switching checks.
 - [ ] Implement Auth context flows:
   - [ ] register (user + account + owner membership + password identity)
@@ -110,8 +129,12 @@ Review `REVIEW.md` before starting Phase 3. Priority items to address first:
   - [ ] logout (token revoke)
   - [ ] switch account (membership verification + new access token)
 - [ ] Add minimal audit event foundation and auth/membership event writes.
+- [ ] Define and test idempotent token-revoke semantics (`already revoked` behavior).
+- [ ] Confirm and test refresh reuse-detection error contract at context boundary.
 
 Acceptance gate:
+- [ ] preamble tests for M1, M7, M8, and L1 pass
+- [ ] review items M1, M7, M8, and L1 are explicitly marked addressed in tracker notes
 - [ ] context tests for each flow (success + failure)
 - [ ] owner-invariant tests
 - [ ] `mix test`
@@ -122,6 +145,7 @@ Acceptance gate:
   - [ ] current user/account/membership loading
   - [ ] role assignment and mismatch handling
 - [ ] Implement JSON response helpers and fallback error serialization.
+- [ ] Use `ConnCase` auth helpers for authenticated controller test setup.
 - [ ] Add versioned routing (`/api/v1`) and required endpoints:
   - [ ] `GET /healthz`
   - [ ] `GET /readyz`
@@ -135,6 +159,7 @@ Acceptance gate:
 Acceptance gate:
 - [ ] controller tests for all required endpoints
 - [ ] consistent error envelope assertions
+- [ ] wrong-issuer and malformed-token request coverage through web/auth plugs
 - [ ] `mix test`
 
 ### Phase 5: Google OAuth Integration
@@ -158,6 +183,7 @@ Acceptance gate:
 - [ ] Add OpenAPI spec for core platform endpoints and schemas.
 - [ ] Add fail-fast startup config validation for DB/JWT/refresh/OAuth/Oban.
 - [ ] Document API lifecycle conventions (versioning/deprecation/error codes).
+- [ ] Ensure production startup blocks unsafe default auth secrets.
 
 Acceptance gate:
 - [ ] worker tests (basic enqueue/perform expectations)
@@ -171,6 +197,7 @@ Acceptance gate:
 - [ ] Run full test suite and fix regressions.
 - [ ] Mark completed `v0.1` checklist items in this file.
 - [ ] Seed/adjust `v0.2` backlog based on what was deferred.
+- [ ] Close remaining review follow-ups not already covered in earlier phases.
 
 Acceptance gate:
 - [ ] `mix format --check-formatted`
