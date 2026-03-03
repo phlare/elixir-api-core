@@ -17,6 +17,9 @@ defmodule ElixirApiCoreWeb.ConnCase do
 
   use ExUnit.CaseTemplate
 
+  alias ElixirApiCore.Auth.Tokens
+  alias ElixirApiCore.AccountsFixtures
+
   using do
     quote do
       # The default endpoint for testing
@@ -34,5 +37,29 @@ defmodule ElixirApiCoreWeb.ConnCase do
   setup tags do
     ElixirApiCore.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
+  end
+
+  @doc """
+  Adds a valid bearer token to the conn for controller tests.
+  """
+  def conn_with_token(conn, opts \\ []) do
+    membership = Keyword.get_lazy(opts, :membership, &build_membership/0)
+    role = Keyword.get(opts, :role, membership.role)
+
+    {:ok, token, _claims} =
+      Tokens.issue_access_token(membership.user_id, membership.account_id, role)
+
+    Plug.Conn.put_req_header(conn, "authorization", "Bearer #{token}")
+  end
+
+  defp build_membership do
+    user = AccountsFixtures.user_fixture()
+    account = AccountsFixtures.account_fixture()
+
+    AccountsFixtures.membership_fixture(%{
+      user: user,
+      account: account,
+      role: :owner
+    })
   end
 end

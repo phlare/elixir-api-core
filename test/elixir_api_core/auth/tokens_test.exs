@@ -41,6 +41,38 @@ defmodule ElixirApiCore.Auth.TokensTest do
     test "returns invalid_token for malformed token" do
       assert {:error, :invalid_token} = Tokens.verify_access_token("not-a-token")
     end
+
+    test "returns invalid_role when issuing with unsupported role" do
+      user = user_fixture()
+      account = account_fixture()
+
+      assert {:error, :invalid_role} =
+               Tokens.issue_access_token(user.id, account.id, "super_admin")
+    end
+
+    test "returns invalid_token when role claim type is invalid" do
+      now = ~U[2026-03-03 10:00:00Z]
+      issuer = Application.fetch_env!(:elixir_api_core, Tokens)[:jwt_issuer]
+      secret = Application.fetch_env!(:elixir_api_core, Tokens)[:jwt_secret]
+
+      claims = %{
+        "sub" => Ecto.UUID.generate(),
+        "user_id" => Ecto.UUID.generate(),
+        "account_id" => Ecto.UUID.generate(),
+        "role" => 123,
+        "iat" => DateTime.to_unix(now),
+        "exp" => DateTime.to_unix(DateTime.add(now, 60, :second)),
+        "iss" => issuer,
+        "jti" => Ecto.UUID.generate()
+      }
+
+      jwk = JOSE.JWK.from_oct(secret)
+      header = %{"alg" => "HS256", "typ" => "JWT"}
+      {_, token} = JOSE.JWT.sign(jwk, header, claims) |> JOSE.JWS.compact()
+
+      assert {:error, :invalid_token} =
+               Tokens.verify_access_token(token, now: DateTime.add(now, 1, :second))
+    end
   end
 
   describe "refresh tokens" do
@@ -119,6 +151,11 @@ defmodule ElixirApiCore.Auth.TokensTest do
     test "hash function is deterministic" do
       token = "sample-token"
       assert Tokens.hash_refresh_token(token) == Tokens.hash_refresh_token(token)
+    end
+
+    test "hash function returns sha256 hex length" do
+      hash = Tokens.hash_refresh_token("sample-token")
+      assert String.length(hash) == 64
     end
   end
 end

@@ -1,6 +1,7 @@
 defmodule ElixirApiCore.AccountsFixtures do
   alias ElixirApiCore.Accounts
   alias ElixirApiCore.Auth.Identity
+  alias ElixirApiCore.Auth.Password
   alias ElixirApiCore.Auth.RefreshToken
   alias ElixirApiCore.Repo
 
@@ -45,7 +46,7 @@ defmodule ElixirApiCore.AccountsFixtures do
       |> Map.delete(:user)
       |> Map.put_new(:user_id, user.id)
       |> Map.put_new(:provider, :password)
-      |> Map.put_new(:password_hash, "hashed-password")
+      |> Map.put_new_lazy(:password_hash, fn -> Password.hash_password("password123!") end)
 
     %Identity{}
     |> Identity.changeset(attrs)

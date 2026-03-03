@@ -19,6 +19,42 @@ defmodule ElixirApiCore.Accounts.SchemasTest do
       assert {:error, changeset} = Accounts.create_user(%{email: "owner@example.com"})
       assert "has already been taken" in errors_on(changeset).email
     end
+
+    test "rejects malformed emails" do
+      assert {:error, changeset} = Accounts.create_user(%{email: "a@b"})
+      assert "must be a valid email address" in errors_on(changeset).email
+
+      assert {:error, changeset} = Accounts.create_user(%{email: "@example.com"})
+      assert "must be a valid email address" in errors_on(changeset).email
+    end
+
+    test "accepts email at the 320-character boundary" do
+      email = String.duplicate("a", 64) <> "@" <> String.duplicate("b", 251) <> ".com"
+      assert String.length(email) == 320
+      assert {:ok, _user} = Accounts.create_user(%{email: email})
+    end
+
+    test "rejects email above 320 characters" do
+      email = String.duplicate("a", 64) <> "@" <> String.duplicate("b", 252) <> ".com"
+      assert String.length(email) == 321
+
+      assert {:error, changeset} = Accounts.create_user(%{email: email})
+      assert "should be at most 320 character(s)" in errors_on(changeset).email
+    end
+  end
+
+  describe "accounts" do
+    test "allows names at min and max boundaries" do
+      assert {:ok, _account} = Accounts.create_account(%{name: "a"})
+      assert {:ok, _account} = Accounts.create_account(%{name: String.duplicate("a", 160)})
+    end
+
+    test "rejects names above max boundary" do
+      assert {:error, changeset} =
+               Accounts.create_account(%{name: String.duplicate("a", 161)})
+
+      assert "should be at most 160 character(s)" in errors_on(changeset).name
+    end
   end
 
   describe "memberships" do
@@ -109,7 +145,7 @@ defmodule ElixirApiCore.Accounts.SchemasTest do
         })
 
       assert "can't be blank" in errors_on(changeset).expires_at
-      assert "should be at least 32 character(s)" in errors_on(changeset).token_hash
+      assert "should be 64 character(s)" in errors_on(changeset).token_hash
     end
 
     test "enforces unique token hashes" do
@@ -125,6 +161,18 @@ defmodule ElixirApiCore.Accounts.SchemasTest do
 
       assert {:error, changeset} = Repo.insert(changeset)
       assert "has already been taken" in errors_on(changeset).token_hash
+    end
+
+    test "rejects already-expired refresh token expiry" do
+      changeset =
+        RefreshToken.changeset(%RefreshToken{}, %{
+          user_id: Ecto.UUID.generate(),
+          token_hash: String.duplicate("c", 64),
+          expires_at:
+            DateTime.utc_now() |> DateTime.truncate(:second) |> DateTime.add(-10, :second)
+        })
+
+      assert "must be in the future" in errors_on(changeset).expires_at
     end
   end
 end

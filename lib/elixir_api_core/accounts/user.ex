@@ -26,7 +26,9 @@ defmodule ElixirApiCore.Accounts.User do
     |> cast(attrs, [:email, :display_name])
     |> normalize_email()
     |> validate_required([:email])
-    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
+    |> validate_format(:email, ~r/^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      message: "must be a valid email address"
+    )
     |> validate_length(:email, max: 320)
     |> validate_length(:display_name, max: 160)
     |> unique_constraint(:email, name: :users_email_lower_index)

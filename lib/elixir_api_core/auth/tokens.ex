@@ -4,6 +4,8 @@ defmodule ElixirApiCore.Auth.Tokens do
   alias ElixirApiCore.Auth.RefreshToken
   alias ElixirApiCore.Repo
 
+  @valid_roles ~w(owner admin member)
+
   @type access_claims :: %{
           user_id: String.t(),
           account_id: String.t(),
@@ -22,25 +24,27 @@ defmodule ElixirApiCore.Auth.Tokens do
 
   def issue_access_token(user_id, account_id, role, opts \\ [])
       when is_binary(user_id) and is_binary(account_id) do
-    now = now(opts)
-    ttl_seconds = Keyword.get(opts, :ttl_seconds, config(:access_token_ttl_seconds, 900))
-    issued_at = DateTime.to_unix(now)
-    expires_at = DateTime.to_unix(DateTime.add(now, ttl_seconds, :second))
+    with {:ok, normalized_role} <- normalize_role(role) do
+      now = now(opts)
+      ttl_seconds = Keyword.get(opts, :ttl_seconds, config(:access_token_ttl_seconds, 900))
+      issued_at = DateTime.to_unix(now)
+      expires_at = DateTime.to_unix(DateTime.add(now, ttl_seconds, :second))
 
-    claims = %{
-      "sub" => user_id,
-      "user_id" => user_id,
-      "account_id" => account_id,
-      "role" => normalize_role(role),
-      "iat" => issued_at,
-      "exp" => expires_at,
-      "iss" => config(:jwt_issuer, "elixir_api_core"),
-      "jti" => Ecto.UUID.generate()
-    }
+      claims = %{
+        "sub" => user_id,
+        "user_id" => user_id,
+        "account_id" => account_id,
+        "role" => normalized_role,
+        "iat" => issued_at,
+        "exp" => expires_at,
+        "iss" => config(:jwt_issuer, "elixir_api_core"),
+        "jti" => Ecto.UUID.generate()
+      }
 
-    case sign_jwt(claims) do
-      {:ok, token} -> {:ok, token, claims}
-      {:error, _reason} = error -> error
+      case sign_jwt(claims) do
+        {:ok, token} -> {:ok, token, claims}
+        {:error, _reason} = error -> error
+      end
     end
   end
 
@@ -68,7 +72,7 @@ defmodule ElixirApiCore.Auth.Tokens do
       expires_at: expires_at
     }
 
-    case %RefreshToken{} |> RefreshToken.changeset(attrs) |> Repo.insert() do
+    case %RefreshToken{} |> RefreshToken.changeset(attrs, now: now) |> Repo.insert() do
       {:ok, refresh_token} ->
         {:ok, %{token: raw_token, refresh_token: refresh_token}}
 
@@ -157,7 +161,7 @@ defmodule ElixirApiCore.Auth.Tokens do
   def hash_refresh_token(raw_token) when is_binary(raw_token) do
     pepper = config(:refresh_token_pepper, "dev_refresh_pepper_change_me")
 
-    :crypto.hash(:sha256, raw_token <> pepper)
+    :crypto.mac(:hmac, :sha256, pepper, raw_token)
     |> Base.encode16(case: :lower)
   end
 
@@ -202,18 +206,25 @@ defmodule ElixirApiCore.Auth.Tokens do
   defp validate_expiration(_claims, _now_unix), do: {:error, :invalid_token}
 
   defp decode_claims(claims) do
-    required_keys = ~w(user_id account_id role exp iat iss jti)
+    user_id = claims["user_id"]
+    account_id = claims["account_id"]
+    role = claims["role"]
+    exp = claims["exp"]
+    iat = claims["iat"]
+    iss = claims["iss"]
+    jti = claims["jti"]
 
-    if Enum.all?(required_keys, &Map.has_key?(claims, &1)) do
+    if is_binary(user_id) and is_binary(account_id) and is_binary(role) and role in @valid_roles and
+         is_integer(exp) and is_integer(iat) and is_binary(iss) and is_binary(jti) do
       {:ok,
        %{
-         user_id: claims["user_id"],
-         account_id: claims["account_id"],
-         role: claims["role"],
-         exp: claims["exp"],
-         iat: claims["iat"],
-         iss: claims["iss"],
-         jti: claims["jti"]
+         user_id: user_id,
+         account_id: account_id,
+         role: role,
+         exp: exp,
+         iat: iat,
+         iss: iss,
+         jti: jti
        }}
     else
       {:error, :invalid_token}
@@ -247,8 +258,13 @@ defmodule ElixirApiCore.Auth.Tokens do
 
   defp normalize_rotate_result({:error, {:invalid_changeset, changeset}}), do: {:error, changeset}
 
-  defp normalize_role(role) when is_atom(role), do: Atom.to_string(role)
-  defp normalize_role(role) when is_binary(role), do: role
+  defp normalize_role(role) when is_atom(role), do: normalize_role(Atom.to_string(role))
+
+  defp normalize_role(role) when is_binary(role) do
+    if role in @valid_roles, do: {:ok, role}, else: {:error, :invalid_role}
+  end
+
+  defp normalize_role(_role), do: {:error, :invalid_role}
 
   defp now(opts) do
     opts
