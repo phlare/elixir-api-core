@@ -36,15 +36,15 @@ This file is a living, versioned deliverables tracker for the template.
   - [ ] `GET /readyz`
   - [ ] `GET /auth/google/start`
   - [ ] `GET /auth/google/callback`
-- [ ] JWT access tokens + opaque refresh tokens implemented.
-- [ ] Refresh token storage is hashed-only (no raw token persistence).
+- [x] JWT access tokens + opaque refresh tokens implemented.
+- [x] Refresh token storage is hashed-only (no raw token persistence).
 - [ ] Refresh transport supports JSON body + HttpOnly cookie.
-- [ ] Refresh rotation + replay/reuse detection behavior implemented.
+- [x] Refresh rotation + replay/reuse detection behavior implemented.
 - [ ] Request plugs set `current_user/current_account/current_role/current_membership`.
 - [ ] Error format standardized (`validation_error`, `auth_error`, `not_found`, etc.).
 - [ ] OpenAPI baseline contract added for core platform endpoints.
 - [ ] Oban installed/configured + example worker + cleanup worker skeleton.
-- [ ] Auth-focused rate limiting baseline in place.
+- [x] Auth-focused rate limiting baseline in place.
 - [ ] Minimal audit event foundation for core auth/membership events.
 - [ ] Config contract with fail-fast startup validation.
 - [ ] API lifecycle conventions documented (`/api/v1`, deprecation/error-code policy).
@@ -81,17 +81,17 @@ Acceptance gate:
 - [x] `mix test`
 
 ### Phase 2: Token and Auth Core Services
-- [ ] Implement JWT service (sign/verify claims: user/account/role/exp).
-- [ ] Implement opaque refresh token generator + hash/verify helper.
-- [ ] Implement refresh token persistence, revocation, expiry checks, and rotation.
-- [ ] Implement reuse detection path (revoked refresh token replay response and user token revocation policy).
-- [ ] Add auth-focused rate limit primitives for login/refresh.
+- [x] Implement JWT service (sign/verify claims: user/account/role/exp).
+- [x] Implement opaque refresh token generator + hash/verify helper.
+- [x] Implement refresh token persistence, revocation, expiry checks, and rotation.
+- [x] Implement reuse detection path (revoked refresh token replay response and user token revocation policy).
+- [x] Add auth-focused rate limit primitives for login/refresh.
 
 Acceptance gate:
-- [ ] unit tests for JWT creation/verification
-- [ ] unit tests for refresh rotation/replay detection
-- [ ] rate-limit behavior tests
-- [ ] `mix test`
+- [x] unit tests for JWT creation/verification
+- [x] unit tests for refresh rotation/replay detection
+- [x] rate-limit behavior tests
+- [x] `mix test`
 
 ### Phase 3: Accounts/Auth Contexts
 - [ ] Implement Accounts context operations for memberships and account switching checks.

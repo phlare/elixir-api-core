@@ -11,6 +11,20 @@ config :elixir_api_core,
   ecto_repos: [ElixirApiCore.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
+config :elixir_api_core, ElixirApiCore.Auth.Tokens,
+  jwt_algorithm: "HS256",
+  jwt_issuer: "elixir_api_core",
+  jwt_secret: "dev_jwt_secret_change_me",
+  access_token_ttl_seconds: 900,
+  refresh_token_ttl_seconds: 2_592_000,
+  refresh_token_pepper: "dev_refresh_pepper_change_me"
+
+config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
+  login_limit: 5,
+  login_window_seconds: 60,
+  refresh_limit: 10,
+  refresh_window_seconds: 60
+
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
   url: [host: "localhost"],

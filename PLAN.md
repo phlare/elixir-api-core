@@ -7,8 +7,9 @@ Track delivery in `docs/CODEX_TASK.md` as a living versioned checklist.
 ## Current Status
 - Completed: Phase 0 scaffold and baseline setup.
 - Completed: Phase 1 core data model (migrations, schemas, owner invariants, validation tests).
+- Completed: Phase 2 token/auth core services (JWT, refresh token rotation/reuse detection, rate limiting primitives).
 - Completed checks: `mix deps.get`, `mix ecto.create`, `mix test`.
-- In progress next: Phase 2 (JWT + refresh token core services).
+- In progress next: Phase 3 (Accounts/Auth business flows built on top of token services).
 
 ## Locked Decisions
 - Runtime: Elixir `1.19.5` + OTP `28` (pin in `.tool-versions` and CI).

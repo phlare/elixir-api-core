@@ -12,6 +12,7 @@ defmodule ElixirApiCore.Application do
       ElixirApiCore.Repo,
       {DNSCluster, query: Application.get_env(:elixir_api_core, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: ElixirApiCore.PubSub},
+      ElixirApiCore.Auth.RateLimiter,
       # Start a worker by calling: ElixirApiCore.Worker.start_link(arg)
       # {ElixirApiCore.Worker, arg},
       # Start to serve requests, typically the last entry
