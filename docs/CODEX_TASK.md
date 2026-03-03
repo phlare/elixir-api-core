@@ -93,6 +93,14 @@ Acceptance gate:
 - [x] rate-limit behavior tests
 - [x] `mix test`
 
+### Pre-Phase 3: Code Review
+
+Review `REVIEW.md` before starting Phase 3. Priority items to address first:
+- Add password hashing library to `mix.exs` (blocks login flow)
+- Fix router scope from `/api` to `/api/v1`
+- Switch refresh token pepper to HMAC (`crypto.mac/4`)
+- Add `conn_with_token/2` helper to `ConnCase` (needed for Phase 4 tests)
+
 ### Phase 3: Accounts/Auth Contexts
 - [ ] Implement Accounts context operations for memberships and account switching checks.
 - [ ] Implement Auth context flows:
