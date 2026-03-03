@@ -19,12 +19,12 @@ This file is a living, versioned deliverables tracker for the template.
 - [x] Phoenix API project scaffolded and runnable.
 - [x] Postgres wired + `docker-compose` for local dev (Postgres service only).
 - [x] Runtime pinned to Elixir `1.19.5` + OTP `28` (`.tool-versions` and CI).
-- [ ] Schemas + migrations:
-  - [ ] `accounts`
-  - [ ] `users`
-  - [ ] `memberships` (`owner/admin/member`)
-  - [ ] `identities` (`password` + `google`)
-  - [ ] `refresh_tokens` (hashed, revocable, expirable)
+- [x] Schemas + migrations:
+  - [x] `accounts`
+  - [x] `users`
+  - [x] `memberships` (`owner/admin/member`)
+  - [x] `identities` (`password` + `google`)
+  - [x] `refresh_tokens` (hashed, revocable, expirable)
 - [ ] Auth/account endpoints:
   - [ ] `POST /auth/register`
   - [ ] `POST /auth/login`
@@ -65,20 +65,20 @@ Acceptance gate:
 - [x] `mix test` (initial generated tests)
 
 ### Phase 1: Data Model and Migrations
-- [ ] Create migrations for `accounts`, `users`, `memberships`, `identities`, `refresh_tokens`.
-- [ ] Add DB constraints/indexes:
-  - [ ] unique user email
-  - [ ] unique membership `(user_id, account_id)`
-  - [ ] membership role check (`owner|admin|member`)
-  - [ ] identity uniqueness on `(provider, provider_uid)` when uid present
-  - [ ] unique refresh token hash
-- [ ] Create Ecto schemas + changesets for all core entities.
-- [ ] Add transactional invariant checks for owner-preservation logic.
+- [x] Create migrations for `accounts`, `users`, `memberships`, `identities`, `refresh_tokens`.
+- [x] Add DB constraints/indexes:
+  - [x] unique user email
+  - [x] unique membership `(user_id, account_id)`
+  - [x] membership role check (`owner|admin|member`)
+  - [x] identity uniqueness on `(provider, provider_uid)` when uid present
+  - [x] unique refresh token hash
+- [x] Create Ecto schemas + changesets for all core entities.
+- [x] Add transactional invariant checks for owner-preservation logic.
 
 Acceptance gate:
-- [ ] `mix ecto.migrate`
-- [ ] schema/changeset tests for constraints and validations
-- [ ] `mix test`
+- [x] `mix ecto.migrate`
+- [x] schema/changeset tests for constraints and validations
+- [x] `mix test`
 
 ### Phase 2: Token and Auth Core Services
 - [ ] Implement JWT service (sign/verify claims: user/account/role/exp).

@@ -24,6 +24,7 @@ defmodule ElixirApiCore.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import ElixirApiCore.DataCase
+      import ElixirApiCore.AccountsFixtures
     end
   end
 
