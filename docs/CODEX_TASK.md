@@ -16,9 +16,9 @@ This file is a living, versioned deliverables tracker for the template.
 - Keep template-only boundaries: no product-domain logic, no Slack/MCP adapters.
 
 ## v0.1 Deliverables (In Progress)
-- [ ] Phoenix API project scaffolded and runnable.
-- [ ] Postgres wired + `docker-compose` for local dev (Postgres service only).
-- [ ] Runtime pinned to Elixir `1.19.5` + OTP `28` (`.tool-versions` and CI).
+- [x] Phoenix API project scaffolded and runnable.
+- [x] Postgres wired + `docker-compose` for local dev (Postgres service only).
+- [x] Runtime pinned to Elixir `1.19.5` + OTP `28` (`.tool-versions` and CI).
 - [ ] Schemas + migrations:
   - [ ] `accounts`
   - [ ] `users`
@@ -48,7 +48,126 @@ This file is a living, versioned deliverables tracker for the template.
 - [ ] Minimal audit event foundation for core auth/membership events.
 - [ ] Config contract with fail-fast startup validation.
 - [ ] API lifecycle conventions documented (`/api/v1`, deprecation/error-code policy).
-- [ ] CI skeleton in place (`mix format --check-formatted`, `mix test`).
+- [x] CI skeleton in place (`mix format --check-formatted`, `mix test`).
+
+## v0.1 Action Breakdown (Execution Order)
+
+### Phase 0: Scaffold and Baseline
+- [x] Generate Phoenix API app in-place (preserve `docs/`).
+- [x] Add `.tool-versions` pinning Elixir `1.19.5` and OTP `28`.
+- [x] Configure `config/dev.exs`, `config/test.exs`, and repo wiring for Postgres.
+- [x] Add `docker-compose.yml` with local Postgres service only.
+- [x] Add CI workflow running formatting and tests.
+
+Acceptance gate:
+- [x] `mix deps.get`
+- [x] `mix ecto.create`
+- [x] `mix test` (initial generated tests)
+
+### Phase 1: Data Model and Migrations
+- [ ] Create migrations for `accounts`, `users`, `memberships`, `identities`, `refresh_tokens`.
+- [ ] Add DB constraints/indexes:
+  - [ ] unique user email
+  - [ ] unique membership `(user_id, account_id)`
+  - [ ] membership role check (`owner|admin|member`)
+  - [ ] identity uniqueness on `(provider, provider_uid)` when uid present
+  - [ ] unique refresh token hash
+- [ ] Create Ecto schemas + changesets for all core entities.
+- [ ] Add transactional invariant checks for owner-preservation logic.
+
+Acceptance gate:
+- [ ] `mix ecto.migrate`
+- [ ] schema/changeset tests for constraints and validations
+- [ ] `mix test`
+
+### Phase 2: Token and Auth Core Services
+- [ ] Implement JWT service (sign/verify claims: user/account/role/exp).
+- [ ] Implement opaque refresh token generator + hash/verify helper.
+- [ ] Implement refresh token persistence, revocation, expiry checks, and rotation.
+- [ ] Implement reuse detection path (revoked refresh token replay response and user token revocation policy).
+- [ ] Add auth-focused rate limit primitives for login/refresh.
+
+Acceptance gate:
+- [ ] unit tests for JWT creation/verification
+- [ ] unit tests for refresh rotation/replay detection
+- [ ] rate-limit behavior tests
+- [ ] `mix test`
+
+### Phase 3: Accounts/Auth Contexts
+- [ ] Implement Accounts context operations for memberships and account switching checks.
+- [ ] Implement Auth context flows:
+  - [ ] register (user + account + owner membership + password identity)
+  - [ ] login (password verification, account resolution)
+  - [ ] refresh (rotation and issuance)
+  - [ ] logout (token revoke)
+  - [ ] switch account (membership verification + new access token)
+- [ ] Add minimal audit event foundation and auth/membership event writes.
+
+Acceptance gate:
+- [ ] context tests for each flow (success + failure)
+- [ ] owner-invariant tests
+- [ ] `mix test`
+
+### Phase 4: Web Layer and Request Context
+- [ ] Add auth pipeline and plugs:
+  - [ ] bearer token parsing/verification
+  - [ ] current user/account/membership loading
+  - [ ] role assignment and mismatch handling
+- [ ] Implement JSON response helpers and fallback error serialization.
+- [ ] Add versioned routing (`/api/v1`) and required endpoints:
+  - [ ] `GET /healthz`
+  - [ ] `GET /readyz`
+  - [ ] `POST /auth/register`
+  - [ ] `POST /auth/login`
+  - [ ] `POST /auth/refresh` (body + cookie support)
+  - [ ] `POST /auth/logout`
+  - [ ] `POST /auth/switch_account`
+  - [ ] `GET /me`
+
+Acceptance gate:
+- [ ] controller tests for all required endpoints
+- [ ] consistent error envelope assertions
+- [ ] `mix test`
+
+### Phase 5: Google OAuth Integration
+- [ ] Define OAuth provider behavior and default Google adapter.
+- [ ] Implement `GET /auth/google/start` URL construction.
+- [ ] Implement `GET /auth/google/callback` exchange/profile/linking flow.
+- [ ] Implement linking rules:
+  - [ ] existing google identity -> login
+  - [ ] existing user by email -> link identity
+  - [ ] new user -> create user/account/membership/identity
+
+Acceptance gate:
+- [ ] adapter-mocked controller/context tests
+- [ ] missing/invalid config tests
+- [ ] `mix test`
+
+### Phase 6: Oban, OpenAPI, and Config Contract
+- [ ] Configure Oban repo/queues.
+- [ ] Add template example worker.
+- [ ] Add cleanup worker skeleton for expired refresh tokens.
+- [ ] Add OpenAPI spec for core platform endpoints and schemas.
+- [ ] Add fail-fast startup config validation for DB/JWT/refresh/OAuth/Oban.
+- [ ] Document API lifecycle conventions (versioning/deprecation/error codes).
+
+Acceptance gate:
+- [ ] worker tests (basic enqueue/perform expectations)
+- [ ] OpenAPI validation/lint check passing
+- [ ] boot failure tests for missing required config
+- [ ] `mix test`
+
+### Phase 7: Final Hardening and Release Readiness
+- [ ] Update README with local setup, runtime pin, Postgres compose usage, and run/test commands.
+- [ ] Verify `mix format --check-formatted`.
+- [ ] Run full test suite and fix regressions.
+- [ ] Mark completed `v0.1` checklist items in this file.
+- [ ] Seed/adjust `v0.2` backlog based on what was deferred.
+
+Acceptance gate:
+- [ ] `mix format --check-formatted`
+- [ ] `mix test`
+- [ ] `mix phx.server` boots successfully
 
 ## v0.1 Definition of Done
 - [ ] `mix test` passes.

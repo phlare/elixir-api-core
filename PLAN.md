@@ -4,6 +4,11 @@
 Build `elixir-api-core` as a Phoenix API template focused on identity, tenancy, and auth foundations only.  
 Track delivery in `docs/CODEX_TASK.md` as a living versioned checklist.
 
+## Current Status
+- Completed: Phase 0 scaffold and baseline setup.
+- Completed checks: `mix deps.get`, `mix ecto.create`, `mix test`.
+- In progress next: Phase 1 (core data model migrations, schemas, constraints, and validation tests).
+
 ## Locked Decisions
 - Runtime: Elixir `1.19.5` + OTP `28` (pin in `.tool-versions` and CI).
 - Docker compose scope: Postgres only.
