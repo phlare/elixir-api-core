@@ -113,14 +113,14 @@ Acceptance gate:
 - [x] full `mix test`
 
 ### Phase 3: Accounts/Auth Contexts
-- [ ] Phase 3 preamble / review-closure tasks (must complete before auth flow implementation):
-  - [ ] Optimize `owner_count_for_update/1` query path (or explicitly document and justify current lock strategy with evidence).
-  - [ ] Add explicit `RateLimiter.reset/0` behavioral test (state cleared and buckets reset).
-  - [ ] Expand membership invariant tests:
-    - [ ] deleting non-owner membership succeeds
-    - [ ] promoting member to owner succeeds when valid
-    - [ ] invalid role update rejected at changeset boundary
-  - [ ] Add targeted test proving `demoting_last_owner?/2` does not trigger owner-count query for non-owner memberships.
+- [x] Phase 3 preamble / review-closure tasks (must complete before auth flow implementation):
+  - [x] Optimize `owner_count_for_update/1` query path (or explicitly document and justify current lock strategy with evidence).
+  - [x] Add explicit `RateLimiter.reset/0` behavioral test (state cleared and buckets reset).
+  - [x] Expand membership invariant tests:
+    - [x] deleting non-owner membership succeeds
+    - [x] promoting member to owner succeeds when valid
+    - [x] invalid role update rejected at changeset boundary
+  - [x] Add targeted test proving `demoting_last_owner?/2` does not trigger owner-count query for non-owner memberships.
 - [ ] Implement Accounts context operations for memberships and account switching checks.
 - [ ] Implement Auth context flows:
   - [ ] register (user + account + owner membership + password identity)
@@ -133,8 +133,8 @@ Acceptance gate:
 - [ ] Confirm and test refresh reuse-detection error contract at context boundary.
 
 Acceptance gate:
-- [ ] preamble tests for M1, M7, M8, and L1 pass
-- [ ] review items M1, M7, M8, and L1 are explicitly marked addressed in tracker notes
+- [x] preamble tests for M1, M7, M8, and L1 pass
+- [x] review items M1, M7, M8, and L1 are explicitly marked addressed in tracker notes
 - [ ] context tests for each flow (success + failure)
 - [ ] owner-invariant tests
 - [ ] `mix test`

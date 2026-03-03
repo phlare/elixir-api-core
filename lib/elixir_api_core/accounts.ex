@@ -102,6 +102,12 @@ defmodule ElixirApiCore.Accounts do
     |> Repo.one!()
   end
 
+  # PostgreSQL does not permit FOR UPDATE with aggregate functions, so COUNT(*) cannot
+  # be used here directly. Instead we lock and fetch only the IDs of owner rows
+  # (minimising data transfer) and count them in Elixir. Locking every owner row
+  # serialises concurrent demotions: any parallel transaction that also attempts to
+  # demote or delete an owner will block on the FOR UPDATE until this transaction
+  # commits, ensuring the invariant is checked against a stable snapshot.
   defp owner_count_for_update(account_id) do
     from(m in Membership,
       where: m.account_id == ^account_id and m.role == :owner,

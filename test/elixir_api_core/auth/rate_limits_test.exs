@@ -35,6 +35,20 @@ defmodule ElixirApiCore.Auth.RateLimitsTest do
     assert {:ok, 4} = RateLimits.check_login(identifier, now_ms: 61_000)
   end
 
+  test "reset/0 clears all buckets so exhausted identifiers are allowed again" do
+    identifier = "ip:10.0.0.99"
+
+    for now_ms <- 0..4 do
+      RateLimits.check_login(identifier, now_ms: now_ms)
+    end
+
+    assert {:error, {:rate_limited, _}} = RateLimits.check_login(identifier, now_ms: 5)
+
+    assert :ok = RateLimiter.reset()
+
+    assert {:ok, 4} = RateLimits.check_login(identifier, now_ms: 5)
+  end
+
   test "check_refresh uses independent bucket from login" do
     identifier = "user:123"
 
