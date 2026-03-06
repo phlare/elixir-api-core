@@ -121,23 +121,23 @@ Acceptance gate:
     - [x] promoting member to owner succeeds when valid
     - [x] invalid role update rejected at changeset boundary
   - [x] Add targeted test proving `demoting_last_owner?/2` does not trigger owner-count query for non-owner memberships.
-- [ ] Implement Accounts context operations for memberships and account switching checks.
-- [ ] Implement Auth context flows:
-  - [ ] register (user + account + owner membership + password identity)
-  - [ ] login (password verification, account resolution)
-  - [ ] refresh (rotation and issuance)
-  - [ ] logout (token revoke)
-  - [ ] switch account (membership verification + new access token)
+- [x] Implement Accounts context operations for memberships and account switching checks.
+- [x] Implement Auth context flows:
+  - [x] register (user + account + owner membership + password identity)
+  - [x] login (password verification, account resolution)
+  - [x] refresh (rotation and issuance)
+  - [x] logout (token revoke)
+  - [x] switch account (membership verification + new access token)
 - [ ] Add minimal audit event foundation and auth/membership event writes.
-- [ ] Define and test idempotent token-revoke semantics (`already revoked` behavior).
-- [ ] Confirm and test refresh reuse-detection error contract at context boundary.
+- [x] Define and test idempotent token-revoke semantics (`already revoked` behavior).
+- [x] Confirm and test refresh reuse-detection error contract at context boundary.
 
 Acceptance gate:
 - [x] preamble tests for M1, M7, M8, and L1 pass
 - [x] review items M1, M7, M8, and L1 are explicitly marked addressed in tracker notes
-- [ ] context tests for each flow (success + failure)
-- [ ] owner-invariant tests
-- [ ] `mix test`
+- [x] context tests for each flow (success + failure)
+- [x] owner-invariant tests
+- [x] `mix test`
 
 ### Phase 4: Web Layer and Request Context
 - [ ] Add auth pipeline and plugs:
