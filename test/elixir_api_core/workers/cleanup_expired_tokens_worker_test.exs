@@ -6,6 +6,25 @@ defmodule ElixirApiCore.Workers.CleanupExpiredTokensWorkerTest do
   alias ElixirApiCore.Auth.RefreshToken
   alias ElixirApiCore.Workers.CleanupExpiredTokensWorker
 
+  test "is scheduled via Oban Cron plugin" do
+    oban_config = Application.fetch_env!(:elixir_api_core, Oban)
+    plugins = Keyword.get(oban_config, :plugins, [])
+
+    cron_plugin =
+      Enum.find_value(plugins, fn
+        {Oban.Plugins.Cron, opts} -> opts
+        _ -> nil
+      end)
+
+    assert cron_plugin, "Oban.Plugins.Cron not configured"
+
+    crontab = Keyword.get(cron_plugin, :crontab, [])
+
+    assert Enum.any?(crontab, fn {_schedule, worker} ->
+             worker == CleanupExpiredTokensWorker
+           end)
+  end
+
   test "deletes expired tokens" do
     user = user_fixture()
 

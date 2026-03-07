@@ -28,7 +28,7 @@ Source of truth for:
 
 ### Oban
 Responsibilities:
-- Scheduled maintenance jobs (cleanup expired/revoked refresh tokens)
+- Scheduled maintenance jobs via `Oban.Plugins.Cron` (cleanup expired/revoked refresh tokens daily at 03:00 UTC)
 - Template example job demonstrating job conventions
 - Email delivery jobs (downstream)
 - OAuth / identity enrichment jobs (downstream, if needed)
@@ -47,8 +47,9 @@ Responsibilities:
    - current_user (by user_id)
    - current_account (by account_id)
    - current_membership (user_id + account_id)
-5. Controllers/contexts scope all queries by current_account.id
-6. Authorization checks role before protected actions
+5. `RequireAccountScope` plug halts if `current_account_id` is missing (defense-in-depth)
+6. Controllers/contexts scope all queries via `Repo.Scoped` helpers (`where_account/2`, `scoped_get/3`)
+7. Authorization checks role before protected actions
 
 Notes:
 - Role in the JWT is treated as a convenience hint; server-side membership is
@@ -114,7 +115,7 @@ Account switching requires issuing a new access token for the selected account:
 
 - JSON responses are consistent
 - Errors have a stable shape (validation vs auth vs not found)
-- All domain queries are account-scoped by default
+- All domain queries are account-scoped via `Repo.Scoped` helpers
 - Pagination and filtering patterns are standardized in helpers
 
 ---

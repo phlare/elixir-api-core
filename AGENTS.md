@@ -7,6 +7,7 @@ This is an API-only web application written using the Phoenix web framework. The
 - All endpoints are JSON API endpoints under `/api/v1` (plus `/healthz` and `/readyz` at root)
 - All API errors use the standard envelope: `{ "error": { "code": "...", "message": "...", "details": {} } }`
 - OAuth provider is configurable via `Application.get_env(:elixir_api_core, :oauth_provider)` — use the mock in tests
+- **Tenant safety**: use `ElixirApiCore.Repo.Scoped` helpers (`where_account/2`, `scoped_get/3`, `scoped_all/2`) for all account-scoped queries — never use raw `Repo.get` or `Repo.all` when the query should be account-scoped
 
 <!-- usage-rules-start -->
 

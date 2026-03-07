@@ -107,7 +107,6 @@ Versioned deliverables tracker for the platform template.
 - [x] Verify `mix format --check-formatted`.
 - [x] Run full test suite (122 tests, 0 failures).
 - [x] Verify `mix phx.server` boots successfully.
-- [x] Close all review follow-ups from `docs/REVIEW.md`.
 
 ### v0.1 Summary
 
@@ -125,49 +124,28 @@ Versioned deliverables tracker for the platform template.
 
 ### v0.1 Deferred
 
-- Refresh transport: HttpOnly cookie support (JSON body works, cookie deferred).
+- Refresh transport: HttpOnly cookie support (JSON body works, cookie deferred to v0.2).
 
 ---
 
-## v0.2 — Cookie Transport (Planned)
+## v0.2 — Cookie Transport, Tooling, and Housekeeping
 
-- [ ] Add HttpOnly cookie support for refresh token transport.
-- [ ] Set `Set-Cookie` header on login/register/refresh responses.
-- [ ] Read refresh token from cookie when not present in request body.
-- [ ] Add CSRF protection considerations for cookie-based auth.
-- [ ] Cookie domain and path configuration.
-
-## v0.3 — Tenant Safety and Idempotency (Planned)
-
-- [ ] Tenant-safety enforcement extras: Plug/middleware to reject queries missing account scope, compile-time checks, test helpers to verify no cross-tenant data leakage.
-- [ ] Idempotency framework rollout examples: idempotency keys, deduplication patterns for downstream services.
-
-## v0.4 — Oban Scheduling and Audit Querying (Planned)
-
-- [ ] Add Oban `Cron` plugin for scheduled cleanup jobs (e.g. daily `CleanupExpiredTokensWorker`).
-- [ ] Add audit trail query API: filtered listing by actor, action, time range with pagination.
-- [ ] Add audit retention policy (e.g. delete events older than 90 days via Oban cron job).
-
-## v0.5 — Auth Hardening (Planned)
-
-- [ ] Session inventory: list active refresh tokens with metadata (device, IP, last used).
-- [ ] Selective session revocation UI support.
-- [ ] "Manage your sessions" API endpoints.
-
-## v0.6 — Observability (Planned)
-
-- [ ] Prometheus metrics endpoint.
-- [ ] OpenTelemetry trace propagation.
-- [ ] Default dashboards/alerts for request latency, error rates, DB pool usage.
-
-## v0.7 — Redis and Distributed Rate Limiting (Planned)
-
-- [ ] Generalize `RateLimiter` to support arbitrary endpoint rate limiting (per-route, per-role).
-- [ ] Move from in-memory ETS to distributed backend (Redis or Postgres-backed).
-- [ ] Expand `/readyz` to a structured dependency health matrix (Oban queues, Redis, external services).
-
-## v0.8 — CI and API Lifecycle Enforcement (Planned)
-
-- [ ] Add OpenAPI CI validation/lint (e.g. `spectral` or `openapi-generator validate`).
-- [ ] Add breaking-change detection against previous spec version.
-- [ ] Enforce deprecation policy in CI (removed fields without prior deprecation annotation fail the build).
+- [x] Add HttpOnly cookie support for refresh token transport.
+- [x] Set `Set-Cookie` header on register/login/refresh/Google callback responses.
+- [x] Read refresh token from cookie when not present in request body (refresh + logout).
+- [x] Body param takes precedence over cookie when both are present.
+- [x] Cookie cleared (max_age=0) on logout.
+- [x] Cookie config: name, path, http_only, secure, same_site, max_age (configurable per environment).
+- [x] Production enforces `secure: true`.
+- [x] Cookie transport can be disabled via `enabled: false` config.
+- [x] Add `dialyxir` and include dialyzer in `mix precommit`.
+- [x] Fix dialyzer warnings (password spec, refresh token type reference).
+- [x] Add `STYLE.md` coding conventions guide.
+- [x] Add `CONTRIBUTING.md`.
+- [x] Update docs (CLAUDE.md, README.md, DECISIONS.md) for v0.2 accuracy.
+- [x] Trim roadmap to template-appropriate scope.
+- [x] 130 tests passing, 0 dialyzer warnings.
+- [x] Tenant-safety middleware: `RequireAccountScope` plug, `Repo.Scoped` query helpers, `setup_tenant_pair` test helper.
+- [x] Oban `Cron` plugin scheduling `CleanupExpiredTokensWorker` daily at 03:00 UTC.
+- [x] OpenAPI CI validation (Spectral lint) and breaking-change detection (oasdiff) in GitHub Actions.
+- [x] 145 tests passing.
