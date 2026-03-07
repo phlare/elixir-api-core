@@ -56,12 +56,12 @@ jobs:
         with:
           file_glob: "priv/openapi/*.yaml"
 
-      - name: Check if base spec exists
+      - name: Extract base spec for comparison
         if: github.event_name == 'pull_request'
         id: base-spec
         run: |
           BASE_REF=${{ github.event.pull_request.base.ref }}
-          if git show "${BASE_REF}:priv/openapi/v1.yaml" > /dev/null 2>&1; then
+          if git show "origin/${BASE_REF}:priv/openapi/v1.yaml" > /tmp/base-openapi.yaml 2>/dev/null; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "No base spec on ${BASE_REF} yet — skipping breaking-change check."
@@ -72,5 +72,5 @@ jobs:
         if: github.event_name == 'pull_request' && steps.base-spec.outputs.exists == 'true'
         uses: oasdiff/oasdiff-action/breaking@main
         with:
-          base: ${{ github.event.pull_request.base.ref }}:priv/openapi/v1.yaml
+          base: /tmp/base-openapi.yaml
           revision: priv/openapi/v1.yaml
