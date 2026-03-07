@@ -25,27 +25,27 @@ This file is a living, versioned deliverables tracker for the template.
   - [x] `memberships` (`owner/admin/member`)
   - [x] `identities` (`password` + `google`)
   - [x] `refresh_tokens` (hashed, revocable, expirable)
-- [ ] Auth/account endpoints:
-  - [ ] `POST /auth/register`
-  - [ ] `POST /auth/login`
-  - [ ] `POST /auth/refresh` (rotation)
-  - [ ] `POST /auth/logout` (revoke)
-  - [ ] `POST /auth/switch_account`
-  - [ ] `GET /me`
-  - [ ] `GET /healthz`
-  - [ ] `GET /readyz`
+- [x] Auth/account endpoints:
+  - [x] `POST /auth/register`
+  - [x] `POST /auth/login`
+  - [x] `POST /auth/refresh` (rotation)
+  - [x] `POST /auth/logout` (revoke)
+  - [x] `POST /auth/switch_account`
+  - [x] `GET /me`
+  - [x] `GET /healthz`
+  - [x] `GET /readyz`
   - [ ] `GET /auth/google/start`
   - [ ] `GET /auth/google/callback`
 - [x] JWT access tokens + opaque refresh tokens implemented.
 - [x] Refresh token storage is hashed-only (no raw token persistence).
 - [ ] Refresh transport supports JSON body + HttpOnly cookie.
 - [x] Refresh rotation + replay/reuse detection behavior implemented.
-- [ ] Request plugs set `current_user/current_account/current_role/current_membership`.
-- [ ] Error format standardized (`validation_error`, `auth_error`, `not_found`, etc.).
+- [x] Request plugs set `current_user/current_account/current_role/current_membership`.
+- [x] Error format standardized (`validation_error`, `auth_error`, `not_found`, etc.).
 - [ ] OpenAPI baseline contract added for core platform endpoints.
 - [ ] Oban installed/configured + example worker + cleanup worker skeleton.
 - [x] Auth-focused rate limiting baseline in place.
-- [ ] Minimal audit event foundation for core auth/membership events.
+- [x] Minimal audit event foundation for core auth/membership events.
 - [ ] Config contract with fail-fast startup validation.
 - [ ] API lifecycle conventions documented (`/api/v1`, deprecation/error-code policy).
 - [x] CI skeleton in place (`mix format --check-formatted`, `mix test`).
@@ -140,27 +140,27 @@ Acceptance gate:
 - [x] `mix test`
 
 ### Phase 4: Web Layer and Request Context
-- [ ] Add auth pipeline and plugs:
-  - [ ] bearer token parsing/verification
-  - [ ] current user/account/membership loading
-  - [ ] role assignment and mismatch handling
-- [ ] Implement JSON response helpers and fallback error serialization.
-- [ ] Use `ConnCase` auth helpers for authenticated controller test setup.
-- [ ] Add versioned routing (`/api/v1`) and required endpoints:
-  - [ ] `GET /healthz`
-  - [ ] `GET /readyz`
-  - [ ] `POST /auth/register`
-  - [ ] `POST /auth/login`
-  - [ ] `POST /auth/refresh` (body + cookie support)
-  - [ ] `POST /auth/logout`
-  - [ ] `POST /auth/switch_account`
-  - [ ] `GET /me`
+- [x] Add auth pipeline and plugs:
+  - [x] bearer token parsing/verification
+  - [x] current user/account/membership loading
+  - [x] role assignment and mismatch handling
+- [x] Implement JSON response helpers and fallback error serialization.
+- [x] Use `ConnCase` auth helpers for authenticated controller test setup.
+- [x] Add versioned routing (`/api/v1`) and required endpoints:
+  - [x] `GET /healthz`
+  - [x] `GET /readyz`
+  - [x] `POST /auth/register`
+  - [x] `POST /auth/login`
+  - [x] `POST /auth/refresh` (body + cookie support)
+  - [x] `POST /auth/logout`
+  - [x] `POST /auth/switch_account`
+  - [x] `GET /me`
 
 Acceptance gate:
-- [ ] controller tests for all required endpoints
-- [ ] consistent error envelope assertions
-- [ ] wrong-issuer and malformed-token request coverage through web/auth plugs
-- [ ] `mix test`
+- [x] controller tests for all required endpoints
+- [x] consistent error envelope assertions
+- [x] wrong-issuer and malformed-token request coverage through web/auth plugs
+- [x] `mix test`
 
 ### Phase 5: Google OAuth Integration
 - [ ] Define OAuth provider behavior and default Google adapter.
