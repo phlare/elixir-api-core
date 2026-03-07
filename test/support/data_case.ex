@@ -25,6 +25,8 @@ defmodule ElixirApiCore.DataCase do
       import Ecto.Query
       import ElixirApiCore.DataCase
       import ElixirApiCore.AccountsFixtures
+
+      use Oban.Testing, repo: ElixirApiCore.Repo
     end
   end
 

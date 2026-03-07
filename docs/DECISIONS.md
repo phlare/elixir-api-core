@@ -41,3 +41,21 @@ Production deployments must provide non-default secrets; default development val
 ## 010 — OpenAPI contract is template-level and endpoint-focused
 OpenAPI is maintained for core platform endpoints in this template.
 Downstream product/domain endpoints are added in downstream repos and can extend the base contract.
+
+## 011 — API lifecycle conventions
+- All API endpoints are versioned under `/api/v1`.
+- New versions (e.g. `/api/v2`) are introduced only for breaking changes.
+- Non-breaking additions (new fields, new endpoints) are added in-place.
+- Deprecated endpoints or fields should include a `deprecated: true` annotation in the OpenAPI spec and a `X-Deprecated` response header before removal.
+- Error codes are stable strings (e.g. `invalid_credentials`, `validation_error`) and must not be renamed once shipped.
+- New error codes may be added but existing codes must remain backward-compatible.
+
+## 012 — Oban for background job processing
+Oban is used for background job processing with PostgreSQL-backed queues.
+Two queues are configured: `default` (general work) and `maintenance` (cleanup tasks).
+The cleanup worker deletes expired and revoked refresh tokens.
+
+## 013 — Fail-fast startup config validation
+The application validates required configuration at boot via `ElixirApiCore.Config.validate!/0`.
+In production, unsafe default values for `jwt_secret` and `refresh_token_pepper` cause a startup crash.
+This prevents accidental deployment with development secrets.

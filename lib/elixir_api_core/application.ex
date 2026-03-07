@@ -7,15 +7,15 @@ defmodule ElixirApiCore.Application do
 
   @impl true
   def start(_type, _args) do
+    ElixirApiCore.Config.validate!()
+
     children = [
       ElixirApiCoreWeb.Telemetry,
       ElixirApiCore.Repo,
       {DNSCluster, query: Application.get_env(:elixir_api_core, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: ElixirApiCore.PubSub},
       ElixirApiCore.Auth.RateLimiter,
-      # Start a worker by calling: ElixirApiCore.Worker.start_link(arg)
-      # {ElixirApiCore.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Oban, Application.fetch_env!(:elixir_api_core, Oban)},
       ElixirApiCoreWeb.Endpoint
     ]
 

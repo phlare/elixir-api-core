@@ -8,6 +8,7 @@
 import Config
 
 config :elixir_api_core,
+  env: config_env(),
   ecto_repos: [ElixirApiCore.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
@@ -24,6 +25,10 @@ config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
   login_window_seconds: 60,
   refresh_limit: 10,
   refresh_window_seconds: 60
+
+config :elixir_api_core, Oban,
+  repo: ElixirApiCore.Repo,
+  queues: [default: 10, maintenance: 5]
 
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,

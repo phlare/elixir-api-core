@@ -49,6 +49,7 @@ defmodule ElixirApiCore.MixProject do
       {:jose, "~> 1.11"},
       {:bcrypt_elixir, "~> 3.0"},
       {:req, "~> 0.5"},
+      {:oban, "~> 2.19"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"}
     ]

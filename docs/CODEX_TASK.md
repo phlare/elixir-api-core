@@ -42,12 +42,12 @@ This file is a living, versioned deliverables tracker for the template.
 - [x] Refresh rotation + replay/reuse detection behavior implemented.
 - [x] Request plugs set `current_user/current_account/current_role/current_membership`.
 - [x] Error format standardized (`validation_error`, `auth_error`, `not_found`, etc.).
-- [ ] OpenAPI baseline contract added for core platform endpoints.
-- [ ] Oban installed/configured + example worker + cleanup worker skeleton.
+- [x] OpenAPI baseline contract added for core platform endpoints.
+- [x] Oban installed/configured + example worker + cleanup worker skeleton.
 - [x] Auth-focused rate limiting baseline in place.
 - [x] Minimal audit event foundation for core auth/membership events.
-- [ ] Config contract with fail-fast startup validation.
-- [ ] API lifecycle conventions documented (`/api/v1`, deprecation/error-code policy).
+- [x] Config contract with fail-fast startup validation.
+- [x] API lifecycle conventions documented (`/api/v1`, deprecation/error-code policy).
 - [x] CI skeleton in place (`mix format --check-formatted`, `mix test`).
 
 ## v0.1 Action Breakdown (Execution Order)
@@ -177,19 +177,19 @@ Acceptance gate:
 - [x] `mix test`
 
 ### Phase 6: Oban, OpenAPI, and Config Contract
-- [ ] Configure Oban repo/queues.
-- [ ] Add template example worker.
-- [ ] Add cleanup worker skeleton for expired refresh tokens.
-- [ ] Add OpenAPI spec for core platform endpoints and schemas.
-- [ ] Add fail-fast startup config validation for DB/JWT/refresh/OAuth/Oban.
-- [ ] Document API lifecycle conventions (versioning/deprecation/error codes).
-- [ ] Ensure production startup blocks unsafe default auth secrets.
+- [x] Configure Oban repo/queues.
+- [x] Add template example worker.
+- [x] Add cleanup worker skeleton for expired refresh tokens.
+- [x] Add OpenAPI spec for core platform endpoints and schemas.
+- [x] Add fail-fast startup config validation for DB/JWT/refresh/OAuth/Oban.
+- [x] Document API lifecycle conventions (versioning/deprecation/error codes).
+- [x] Ensure production startup blocks unsafe default auth secrets.
 
 Acceptance gate:
-- [ ] worker tests (basic enqueue/perform expectations)
-- [ ] OpenAPI validation/lint check passing
-- [ ] boot failure tests for missing required config
-- [ ] `mix test`
+- [x] worker tests (basic enqueue/perform expectations)
+- [x] OpenAPI validation/lint check passing
+- [x] boot failure tests for missing required config
+- [x] `mix test`
 
 ### Phase 7: Final Hardening and Release Readiness
 - [ ] Update README with local setup, runtime pin, Postgres compose usage, and run/test commands.

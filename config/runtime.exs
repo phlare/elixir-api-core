@@ -53,6 +53,18 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
+  jwt_secret =
+    System.get_env("JWT_SECRET") ||
+      raise "environment variable JWT_SECRET is missing"
+
+  refresh_token_pepper =
+    System.get_env("REFRESH_TOKEN_PEPPER") ||
+      raise "environment variable REFRESH_TOKEN_PEPPER is missing"
+
+  config :elixir_api_core, ElixirApiCore.Auth.Tokens,
+    jwt_secret: jwt_secret,
+    refresh_token_pepper: refresh_token_pepper
+
   host = System.get_env("PHX_HOST") || "example.com"
 
   config :elixir_api_core, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
