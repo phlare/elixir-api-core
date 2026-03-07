@@ -7,6 +7,7 @@ defmodule ElixirApiCoreWeb.Router do
 
   pipeline :authenticated do
     plug ElixirApiCoreWeb.Plugs.Auth
+    plug ElixirApiCoreWeb.Plugs.RequireAccountScope
   end
 
   # Health endpoints — no auth, no versioning

@@ -20,6 +20,15 @@ config :elixir_api_core, ElixirApiCore.Auth.Tokens,
   refresh_token_ttl_seconds: 2_592_000,
   refresh_token_pepper: "dev_refresh_pepper_change_me"
 
+config :elixir_api_core, ElixirApiCore.Auth.Cookie,
+  enabled: true,
+  name: "_refresh_token",
+  path: "/api/v1/auth",
+  http_only: true,
+  secure: false,
+  same_site: "Strict",
+  max_age: 2_592_000
+
 config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
   login_limit: 5,
   login_window_seconds: 60,
@@ -28,7 +37,13 @@ config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
 
 config :elixir_api_core, Oban,
   repo: ElixirApiCore.Repo,
-  queues: [default: 10, maintenance: 5]
+  queues: [default: 10, maintenance: 5],
+  plugins: [
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"0 3 * * *", ElixirApiCore.Workers.CleanupExpiredTokensWorker}
+     ]}
+  ]
 
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,

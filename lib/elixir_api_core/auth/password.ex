@@ -4,7 +4,7 @@ defmodule ElixirApiCore.Auth.Password do
     Bcrypt.hash_pwd_salt(password)
   end
 
-  @spec verify_password(binary(), binary()) :: boolean()
+  @spec verify_password(binary(), binary() | nil) :: boolean()
   def verify_password(password, password_hash)
       when is_binary(password) and is_binary(password_hash) do
     Bcrypt.verify_pass(password, password_hash)

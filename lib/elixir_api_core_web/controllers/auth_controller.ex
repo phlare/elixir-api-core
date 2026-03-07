@@ -2,6 +2,7 @@ defmodule ElixirApiCoreWeb.AuthController do
   use ElixirApiCoreWeb, :controller
 
   alias ElixirApiCore.Auth
+  alias ElixirApiCore.Auth.Cookie
 
   action_fallback ElixirApiCoreWeb.FallbackController
 
@@ -9,6 +10,7 @@ defmodule ElixirApiCoreWeb.AuthController do
     with {:ok, result} <- Auth.register(params) do
       conn
       |> put_status(:created)
+      |> put_refresh_cookie(result.refresh_token)
       |> json(%{
         data: %{
           user: user_json(result.user),
@@ -22,7 +24,9 @@ defmodule ElixirApiCoreWeb.AuthController do
 
   def login(conn, params) do
     with {:ok, result} <- Auth.login(params) do
-      json(conn, %{
+      conn
+      |> put_refresh_cookie(result.refresh_token)
+      |> json(%{
         data: %{
           user: user_json(result.user),
           access_token: result.access_token,
@@ -38,8 +42,12 @@ defmodule ElixirApiCoreWeb.AuthController do
   end
 
   def refresh(conn, params) do
+    params = maybe_read_cookie_token(params, conn)
+
     with {:ok, result} <- Auth.refresh(params) do
-      json(conn, %{
+      conn
+      |> put_refresh_cookie(result.refresh_token)
+      |> json(%{
         data: %{
           access_token: result.access_token,
           refresh_token: result.refresh_token
@@ -49,8 +57,12 @@ defmodule ElixirApiCoreWeb.AuthController do
   end
 
   def logout(conn, params) do
+    params = maybe_read_cookie_token(params, conn)
+
     with {:ok, _} <- Auth.logout(params) do
-      json(conn, %{data: %{status: "ok"}})
+      conn
+      |> delete_refresh_cookie()
+      |> json(%{data: %{status: "ok"}})
     end
   end
 
@@ -77,6 +89,7 @@ defmodule ElixirApiCoreWeb.AuthController do
 
       conn
       |> put_status(status)
+      |> put_refresh_cookie(result.refresh_token)
       |> json(%{data: data})
     end
   end
@@ -94,6 +107,45 @@ defmodule ElixirApiCoreWeb.AuthController do
       })
     end
   end
+
+  # Cookie helpers
+
+  defp put_refresh_cookie(conn, token) do
+    if Cookie.enabled?() do
+      put_resp_cookie(conn, Cookie.name(), token, Cookie.options())
+    else
+      conn
+    end
+  end
+
+  defp delete_refresh_cookie(conn) do
+    if Cookie.enabled?() do
+      put_resp_cookie(conn, Cookie.name(), "", Cookie.delete_options())
+    else
+      conn
+    end
+  end
+
+  defp maybe_read_cookie_token(params, conn) do
+    if has_refresh_token?(params) do
+      params
+    else
+      conn = Plug.Conn.fetch_cookies(conn)
+
+      case conn.cookies[Cookie.name()] do
+        nil -> params
+        "" -> params
+        token -> Map.put(params, "refresh_token", token)
+      end
+    end
+  end
+
+  defp has_refresh_token?(params) do
+    token = Map.get(params, "refresh_token") || Map.get(params, :refresh_token)
+    is_binary(token) and token != ""
+  end
+
+  # JSON helpers
 
   defp user_json(user) do
     %{id: user.id, email: user.email, display_name: user.display_name}

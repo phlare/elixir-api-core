@@ -44,6 +44,44 @@ defmodule ElixirApiCore.DataCase do
   end
 
   @doc """
+  Sets up two isolated tenant contexts for cross-tenant leakage tests.
+
+  Returns a map with `:account_a`, `:account_b`, `:user_a`, `:user_b`,
+  `:membership_a`, and `:membership_b`. Use this to verify that queries
+  scoped to one account never return data from the other.
+
+  ## Example
+
+      setup do
+        {:ok, tenants: setup_tenant_pair()}
+      end
+
+      test "memberships are isolated", %{tenants: t} do
+        results = Membership |> Repo.Scoped.scoped_all(t.account_a.id)
+        assert Enum.all?(results, & &1.account_id == t.account_a.id)
+      end
+  """
+  def setup_tenant_pair do
+    alias ElixirApiCore.AccountsFixtures
+
+    user_a = AccountsFixtures.user_fixture()
+    user_b = AccountsFixtures.user_fixture()
+    account_a = AccountsFixtures.account_fixture()
+    account_b = AccountsFixtures.account_fixture()
+    membership_a = AccountsFixtures.membership_fixture(%{user: user_a, account: account_a})
+    membership_b = AccountsFixtures.membership_fixture(%{user: user_b, account: account_b})
+
+    %{
+      account_a: account_a,
+      account_b: account_b,
+      user_a: user_a,
+      user_b: user_b,
+      membership_a: membership_a,
+      membership_b: membership_b
+    }
+  end
+
+  @doc """
   A helper that transforms changeset errors into a map of messages.
 
       assert {:error, changeset} = Accounts.create_user(%{password: "short"})

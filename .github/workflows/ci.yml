@@ -43,3 +43,22 @@ jobs:
         env:
           MIX_ENV: test
         run: mix test
+
+  openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint OpenAPI spec
+        uses: stoplightio/spectral-action@latest
+        with:
+          file_glob: "priv/openapi/*.yaml"
+
+      - name: Check for breaking changes
+        if: github.event_name == 'pull_request'
+        uses: oasdiff/oasdiff-action/breaking@main
+        with:
+          base: ${{ github.event.pull_request.base.ref }}:priv/openapi/v1.yaml
+          revision: priv/openapi/v1.yaml

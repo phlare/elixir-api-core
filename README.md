@@ -1,6 +1,7 @@
 # Elixir API Core
 
 [![CI](https://github.com/phlare/elixir-api-core/actions/workflows/ci.yml/badge.svg)](https://github.com/phlare/elixir-api-core/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/phlare/elixir-api-core)](https://github.com/phlare/elixir-api-core/releases/latest)
 [![Elixir](https://img.shields.io/badge/Elixir-1.19.5-4B275F)](https://elixir-lang.org)
 [![OTP](https://img.shields.io/badge/OTP-28-blue)](https://www.erlang.org)
 [![Phoenix](https://img.shields.io/badge/Phoenix-1.8-orange)](https://www.phoenixframework.org)
@@ -45,7 +46,7 @@ mix test test/elixir_api_core/auth/tokens_test.exs:42
 ## Pre-commit Checks
 
 ```bash
-# Compile warnings, unused deps, formatting, tests
+# Compile warnings, unused deps, formatting, tests, dialyzer
 mix precommit
 ```
 

@@ -10,6 +10,9 @@ config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
     hosts: ["localhost", "127.0.0.1"]
   ]
 
+# Refresh token cookie must be secure in production
+config :elixir_api_core, ElixirApiCore.Auth.Cookie, secure: true
+
 # Do not print debug messages in production
 config :logger, level: :info
 
