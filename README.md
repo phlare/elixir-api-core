@@ -92,6 +92,17 @@ Dev/test use plaintext defaults in `config/config.exs`. Production requires thes
 | `PHX_HOST` | Production hostname |
 | `PORT` | HTTP port (default: 4000) |
 
+## Related Templates
+
+This is one of two reusable service templates. They share API conventions and response envelopes but are otherwise independent.
+
+| Template | Purpose | Stack |
+|----------|---------|-------|
+| **elixir-api-core** (this repo) | Core backend APIs | Elixir, Phoenix, PostgreSQL |
+| [**node-edge-core**](https://github.com/phlare/node-edge-core) | Edge/integration services | TypeScript, Fastify, Zod |
+
+Product services are created *from* these templates and then diverge freely with domain logic. They're designed to work together — edge services built from node-edge-core call backend APIs built from elixir-api-core.
+
 ## Project Status
 
 See `CHANGELOG.md` for the versioned task tracker.
