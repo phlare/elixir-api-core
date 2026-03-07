@@ -30,9 +30,10 @@ Password identities use `bcrypt_elixir` for password hashing and verification.
 Test fixtures should generate real bcrypt hashes so login/verify paths use realistic data.
 
 ## 008 — Refresh transport supports body and HttpOnly cookie
-Refresh token endpoints support:
-- request body `refresh_token` for API/service clients
-- HttpOnly cookie transport for browser clients
+Refresh token endpoints support both transports simultaneously:
+- Request body `refresh_token` param for API/service clients
+- HttpOnly cookie (`_refresh_token`) for browser clients
+Body param takes precedence when both are present. Cookie is scoped to `/api/v1/auth`, uses `SameSite=Strict`, and requires `Secure` in production. The cookie transport can be disabled via config (`enabled: false`).
 
 ## 009 — JWT signing uses HS256 in template baseline
 Access tokens are signed with HS256 using a configured secret.

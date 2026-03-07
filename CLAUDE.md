@@ -24,7 +24,7 @@ mix test test/elixir_api_core/auth/tokens_test.exs
 # Run a single test by line number
 mix test test/elixir_api_core/auth/tokens_test.exs:42
 
-# Pre-commit checks (compile warnings, unused deps, formatting, tests)
+# Pre-commit checks (compile warnings, unused deps, formatting, tests, dialyzer)
 mix precommit
 
 # Database management
@@ -63,7 +63,7 @@ Plus **audit_events** (append-only event log) and **oban_jobs** (background job 
 ### Token Strategy
 
 - **Access tokens**: short-lived JWT (15 min), claims: `user_id`, `account_id`, `role`, `exp`, `iat`, `iss`, `jti`. Signed with HS256 via `jose`.
-- **Refresh tokens**: opaque random bytes, hashed (SHA-256 HMAC + pepper) before DB storage, 30-day TTL, rotated on every use.
+- **Refresh tokens**: opaque random bytes, hashed (SHA-256 HMAC + pepper) before DB storage, 30-day TTL, rotated on every use. Delivered via JSON body and optionally via HttpOnly cookie (`ElixirApiCore.Auth.Cookie`).
 - **Reuse detection**: replaying a revoked refresh token triggers revocation of *all* active tokens for that user.
 
 ### Rate Limiting
@@ -98,7 +98,7 @@ All API errors use a stable envelope:
 
 ## Testing
 
-- 122 tests, 0 failures
+- 130 tests, 0 failures
 - Uses `DataCase` (SQL Sandbox, async-safe) for DB tests and `ConnCase` for controller tests
 - Test factories live in `test/support/fixtures/accounts_fixtures.ex`
 - `conn_with_token/2` helper in `ConnCase` for authenticated request tests
@@ -109,4 +109,4 @@ All API errors use a stable envelope:
 
 ## Current Status
 
-v0.1 complete. See `CHANGELOG.md` for the versioned task tracker and `docs/ARCHITECTURE.md` for detailed design.
+v0.2 complete. See `CHANGELOG.md` for the versioned task tracker and `docs/ARCHITECTURE.md` for detailed design.

@@ -19,7 +19,7 @@ defmodule ElixirApiCore.Auth.Tokens do
   @type rotate_result :: %{
           user_id: String.t(),
           refresh_token: String.t(),
-          refresh_token_record: RefreshToken.t()
+          refresh_token_record: %RefreshToken{}
         }
 
   def issue_access_token(user_id, account_id, role, opts \\ [])
