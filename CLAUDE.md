@@ -2,10 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Assistant Role
-
-This project is implemented by Codex. Claude Code assists with **code review, plan validation, and identifying issues** — not with writing or committing implementation code. See `REVIEW.md` for the current review findings.
-
 ## Project Overview
 
 Phoenix API template for multi-tenant identity, authentication, and authorization. This is a reusable foundation — it contains no product logic, only auth/tenancy/identity primitives. Elixir 1.19.5 + OTP 28.3.3 (pinned in `.tool-versions`).
@@ -46,25 +42,28 @@ Local Postgres runs via Docker: `docker-compose up -d`
 
 ### Namespaces
 
-**`ElixirApiCore.*`** — business logic, split into two contexts:
+**`ElixirApiCore.*`** — business logic, split into three contexts:
 - `Accounts` — User, Account, Membership CRUD and invariant enforcement
-- `Auth` — Token services, rate limiting, Identity/RefreshToken schemas
+- `Auth` — Token services, rate limiting, Identity/RefreshToken schemas, Google OAuth
+- `Audit` — Event logging for auth and membership actions
 
-**`ElixirApiCoreWeb.*`** — Phoenix HTTP layer (endpoint, router, controllers, plugs). Currently minimal — auth endpoints are Phase 3 work.
+**`ElixirApiCoreWeb.*`** — Phoenix HTTP layer (endpoint, router, controllers, plugs, fallback controller). Serves 10 endpoints under `/api/v1` plus health checks at root.
 
 ### Domain Model
 
-Five DB tables (all UUID PKs, UTC timestamps):
+Five core DB tables (all UUID PKs, UTC timestamps):
 - **accounts** — the tenancy boundary; all data scoped to an account
 - **users** — cross-account identity (email unique globally)
 - **memberships** — joins users ↔ accounts with role (`owner | admin | member`); unique per (user, account)
 - **identities** — auth credentials per user: `password` (stores `password_hash`) or `google` (stores `provider_uid`)
 - **refresh_tokens** — opaque tokens stored as hashed values with expiry/revocation
 
+Plus **audit_events** (append-only event log) and **oban_jobs** (background job queue).
+
 ### Token Strategy
 
 - **Access tokens**: short-lived JWT (15 min), claims: `user_id`, `account_id`, `role`, `exp`, `iat`, `iss`, `jti`. Signed with HS256 via `jose`.
-- **Refresh tokens**: opaque random bytes, hashed (SHA-256 + pepper) before DB storage, 30-day TTL, rotated on every use.
+- **Refresh tokens**: opaque random bytes, hashed (SHA-256 HMAC + pepper) before DB storage, 30-day TTL, rotated on every use.
 - **Reuse detection**: replaying a revoked refresh token triggers revocation of *all* active tokens for that user.
 
 ### Rate Limiting
@@ -73,6 +72,14 @@ Five DB tables (all UUID PKs, UTC timestamps):
 - `login`: 5 attempts per 60s window
 - `refresh`: 10 attempts per 60s window
 
+### Google OAuth
+
+Configurable `OAuthProvider` behaviour with a default Google adapter. Test suite uses a mock provider via `Application.get_env(:elixir_api_core, :oauth_provider)`. Three linking rules: existing identity → login, existing email → link identity, new → create user/account/membership/identity.
+
+### Background Jobs
+
+Oban with `default` and `maintenance` queues. Includes an example worker and a `CleanupExpiredTokensWorker` that removes expired/revoked refresh tokens.
+
 ### Key Invariants
 
 - **Owner invariant**: every account must always have at least one `owner` membership. Enforced transactionally in `ElixirApiCore.Accounts` using `SELECT FOR UPDATE` row locking before any role change or membership deletion.
@@ -80,7 +87,7 @@ Five DB tables (all UUID PKs, UTC timestamps):
 
 ### Configuration
 
-App config lives under module keys, e.g. `Application.get_env(:elixir_api_core, ElixirApiCore.Auth.Tokens)`. Sensitive values (`jwt_secret`, `refresh_token_pepper`, `DATABASE_URL`, `SECRET_KEY_BASE`) are loaded from env vars in `config/runtime.exs`. Dev/test use plaintext defaults in `config/config.exs`.
+App config lives under module keys, e.g. `Application.get_env(:elixir_api_core, ElixirApiCore.Auth.Tokens)`. Sensitive values (`jwt_secret`, `refresh_token_pepper`, `DATABASE_URL`, `SECRET_KEY_BASE`) are loaded from env vars in `config/runtime.exs`. Dev/test use plaintext defaults in `config/config.exs`. Fail-fast validation at boot blocks unsafe default secrets in production (`ElixirApiCore.Config.validate!/0`).
 
 ### Error Format
 
@@ -91,15 +98,15 @@ All API errors use a stable envelope:
 
 ## Testing
 
-- Uses `DataCase` (SQL Sandbox, async-safe) for all DB tests
+- 122 tests, 0 failures
+- Uses `DataCase` (SQL Sandbox, async-safe) for DB tests and `ConnCase` for controller tests
 - Test factories live in `test/support/fixtures/accounts_fixtures.ex`
+- `conn_with_token/2` helper in `ConnCase` for authenticated request tests
 - Auth tests cover JWT lifecycle, refresh token rotation, reuse detection, and rate limit windows
 - Membership invariant tests use concurrent transactions to verify owner protection
+- Google OAuth tests use a mock provider configured in `config/test.exs`
+- Oban tests use `Oban.Testing` with `testing: :inline` mode
 
-## Current Status (v0.1)
+## Current Status
 
-Phases 0–2 complete: data model, schemas/changesets, JWT + refresh token services, rate limiting, owner invariant, CI.
-
-Phases 3–7 pending: HTTP auth endpoints (`/auth/register`, `/login`, `/refresh`, `/logout`, `/me`), request context plugs, Google OAuth, OpenAPI spec, Oban workers.
-
-See `docs/CODEX_TASK.md` for the living task tracker and `docs/ARCHITECTURE.md` for detailed design decisions.
+v0.1 complete. See `CHANGELOG.md` for the versioned task tracker and `docs/ARCHITECTURE.md` for detailed design.

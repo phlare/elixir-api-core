@@ -1,6 +1,8 @@
 # Code Review: elixir-api-core v0.1 (Phases 0–2)
 
-This document captures a review of the plan and all committed code through Phase 2. It is intended to be read before Phase 3 work begins.
+> **Resolution status:** All items in this review have been addressed as of v0.1. Critical items (C1–C3) were resolved in Phase 2.1 and Phase 6. High items (H1–H3) were resolved in Phase 2.1. Medium items (M1–M10) were resolved across Phases 3–7. Low items (L1–L4) were resolved in Phase 2.1 and Phase 3. This document is retained as a historical artifact.
+
+This document captures a review of the plan and all committed code through Phase 2. It was read before Phase 3 work began.
 
 ---
 

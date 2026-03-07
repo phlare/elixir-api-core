@@ -28,10 +28,10 @@ Source of truth for:
 
 ### Oban
 Responsibilities:
-- Email delivery jobs (later)
-- OAuth / identity enrichment jobs (if needed)
-- Scheduled maintenance jobs (cleanup expired refresh tokens)
+- Scheduled maintenance jobs (cleanup expired/revoked refresh tokens)
 - Template example job demonstrating job conventions
+- Email delivery jobs (downstream)
+- OAuth / identity enrichment jobs (downstream, if needed)
 
 ---
 
@@ -93,9 +93,8 @@ Notes:
    - create a new RefreshToken row
    - issue new access token + new refresh token
 
-Optional hardening (later):
-- reuse detection: if a revoked token is presented again, revoke all active tokens
-  for that user (or account) and force re-login
+Reuse detection: if a revoked token is presented again, all active tokens
+for that user are revoked, forcing re-login.
 
 ---
 

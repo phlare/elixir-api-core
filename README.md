@@ -87,4 +87,4 @@ Dev/test use plaintext defaults in `config/config.exs`. Production requires thes
 
 ## Project Status
 
-See `docs/CODEX_TASK.md` for the living task tracker.
+See `CHANGELOG.md` for the versioned task tracker.
