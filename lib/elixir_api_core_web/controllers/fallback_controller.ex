@@ -63,6 +63,36 @@ defmodule ElixirApiCoreWeb.FallbackController do
     |> render("error.json", code: "account_not_found", message: "Account not found")
   end
 
+  def call(conn, {:error, {:token_exchange_failed, _reason}}) do
+    conn
+    |> put_status(:bad_gateway)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "oauth_exchange_failed",
+      message: "Failed to exchange authorization code with provider"
+    )
+  end
+
+  def call(conn, {:error, {:userinfo_failed, _reason}}) do
+    conn
+    |> put_status(:bad_gateway)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "oauth_userinfo_failed",
+      message: "Failed to retrieve user info from provider"
+    )
+  end
+
+  def call(conn, {:error, :google_oauth_not_configured}) do
+    conn
+    |> put_status(:service_unavailable)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "oauth_not_configured",
+      message: "Google OAuth is not configured"
+    )
+  end
+
   def call(conn, {:error, :no_active_membership}) do
     conn
     |> put_status(:unprocessable_entity)

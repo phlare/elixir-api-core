@@ -20,6 +20,9 @@ config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
   secret_key_base: "pVJOnFZKmwk4+zbSStV/mnpbUaG1JLMz3Cdc/DAMhzKVgk0tUVnoyKShjz/Q7v+K",
   server: false
 
+# Use mock OAuth provider in tests
+config :elixir_api_core, :oauth_provider, ElixirApiCore.Auth.MockOAuthProvider
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 

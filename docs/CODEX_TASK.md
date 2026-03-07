@@ -34,8 +34,8 @@ This file is a living, versioned deliverables tracker for the template.
   - [x] `GET /me`
   - [x] `GET /healthz`
   - [x] `GET /readyz`
-  - [ ] `GET /auth/google/start`
-  - [ ] `GET /auth/google/callback`
+  - [x] `GET /auth/google/start`
+  - [x] `GET /auth/google/callback`
 - [x] JWT access tokens + opaque refresh tokens implemented.
 - [x] Refresh token storage is hashed-only (no raw token persistence).
 - [ ] Refresh transport supports JSON body + HttpOnly cookie.
@@ -163,18 +163,18 @@ Acceptance gate:
 - [x] `mix test`
 
 ### Phase 5: Google OAuth Integration
-- [ ] Define OAuth provider behavior and default Google adapter.
-- [ ] Implement `GET /auth/google/start` URL construction.
-- [ ] Implement `GET /auth/google/callback` exchange/profile/linking flow.
-- [ ] Implement linking rules:
-  - [ ] existing google identity -> login
-  - [ ] existing user by email -> link identity
-  - [ ] new user -> create user/account/membership/identity
+- [x] Define OAuth provider behavior and default Google adapter.
+- [x] Implement `GET /auth/google/start` URL construction.
+- [x] Implement `GET /auth/google/callback` exchange/profile/linking flow.
+- [x] Implement linking rules:
+  - [x] existing google identity -> login
+  - [x] existing user by email -> link identity
+  - [x] new user -> create user/account/membership/identity
 
 Acceptance gate:
-- [ ] adapter-mocked controller/context tests
-- [ ] missing/invalid config tests
-- [ ] `mix test`
+- [x] adapter-mocked controller/context tests
+- [x] missing/invalid config tests
+- [x] `mix test`
 
 ### Phase 6: Oban, OpenAPI, and Config Contract
 - [ ] Configure Oban repo/queues.

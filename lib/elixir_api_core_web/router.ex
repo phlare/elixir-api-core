@@ -25,6 +25,8 @@ defmodule ElixirApiCoreWeb.Router do
     post "/auth/login", AuthController, :login
     post "/auth/refresh", AuthController, :refresh
     post "/auth/logout", AuthController, :logout
+    get "/auth/google/start", AuthController, :google_start
+    get "/auth/google/callback", AuthController, :google_callback
   end
 
   # Authenticated endpoints

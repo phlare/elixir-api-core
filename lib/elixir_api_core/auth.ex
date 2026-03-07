@@ -173,6 +173,182 @@ defmodule ElixirApiCore.Auth do
   end
 
   @doc """
+  Returns the Google OAuth authorize URL for redirecting the user.
+
+  Uses the configured OAuth provider module (defaults to
+  `ElixirApiCore.Auth.Providers.Google`).
+  """
+  def google_authorize_url do
+    state = Base.url_encode64(:crypto.strong_rand_bytes(16), padding: false)
+    oauth_provider().authorize_url(state)
+  end
+
+  @doc """
+  Handles the Google OAuth callback.
+
+  Exchanges the authorization code for user info, then applies linking rules:
+  1. If a google identity with the provider_uid exists → login as that user
+  2. If a user with the same email exists → link google identity to that user
+  3. Otherwise → create a new user, account, membership, and google identity
+  """
+  def google_callback(params) do
+    code = get_param(params, :code)
+
+    with {:ok, user_info} <- oauth_provider().exchange_code(code) do
+      case find_google_identity(user_info.provider_uid) do
+        {:ok, identity} ->
+          login_via_identity(identity)
+
+        :not_found ->
+          case Repo.get_by(User, email: String.downcase(user_info.email)) do
+            nil ->
+              create_google_user(user_info)
+
+            existing_user ->
+              link_google_identity(existing_user, user_info)
+          end
+      end
+    end
+  end
+
+  defp find_google_identity(provider_uid) do
+    case Repo.get_by(Identity, provider: :google, provider_uid: provider_uid) do
+      nil -> :not_found
+      identity -> {:ok, identity}
+    end
+  end
+
+  defp login_via_identity(identity) do
+    user = Repo.get!(User, identity.user_id)
+    memberships = get_user_memberships(user.id)
+
+    case memberships do
+      [] ->
+        {:error, :no_active_membership}
+
+      [active | _] ->
+        with {:ok, access_token, _claims} <-
+               Tokens.issue_access_token(user.id, active.account_id, active.role),
+             {:ok, refresh_result} <- Tokens.issue_refresh_token(user.id) do
+          {:ok,
+           %{
+             user: user,
+             access_token: access_token,
+             refresh_token: refresh_result.token,
+             active_account_id: active.account_id,
+             active_role: active.role,
+             memberships: memberships
+           }}
+        end
+        |> with_audit(fn data ->
+          %{
+            action: "user.logged_in_via_google",
+            actor_id: data.user.id,
+            account_id: data.active_account_id,
+            resource_type: "user",
+            resource_id: data.user.id
+          }
+        end)
+    end
+  end
+
+  defp create_google_user(user_info) do
+    Repo.transaction(fn ->
+      with {:ok, user} <-
+             Accounts.create_user(%{
+               email: user_info.email,
+               display_name: user_info.name
+             }),
+           {:ok, account} <-
+             Accounts.create_account(%{
+               name: default_account_name(user_info.email)
+             }),
+           {:ok, membership} <-
+             Accounts.create_membership(%{
+               user_id: user.id,
+               account_id: account.id,
+               role: :owner
+             }),
+           {:ok, _identity} <-
+             insert_identity(%{
+               user_id: user.id,
+               provider: :google,
+               provider_uid: user_info.provider_uid
+             }),
+           {:ok, access_token, _claims} <-
+             Tokens.issue_access_token(user.id, account.id, :owner),
+           {:ok, refresh_result} <- Tokens.issue_refresh_token(user.id) do
+        %{
+          user: user,
+          account: account,
+          membership: membership,
+          access_token: access_token,
+          refresh_token: refresh_result.token
+        }
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> with_audit(fn data ->
+      %{
+        action: "user.registered_via_google",
+        actor_id: data.user.id,
+        account_id: data.account.id,
+        resource_type: "user",
+        resource_id: data.user.id
+      }
+    end)
+  end
+
+  defp link_google_identity(user, user_info) do
+    with {:ok, _identity} <-
+           insert_identity(%{
+             user_id: user.id,
+             provider: :google,
+             provider_uid: user_info.provider_uid
+           }) do
+      memberships = get_user_memberships(user.id)
+
+      case memberships do
+        [] ->
+          {:error, :no_active_membership}
+
+        [active | _] ->
+          with {:ok, access_token, _claims} <-
+                 Tokens.issue_access_token(user.id, active.account_id, active.role),
+               {:ok, refresh_result} <- Tokens.issue_refresh_token(user.id) do
+            {:ok,
+             %{
+               user: user,
+               access_token: access_token,
+               refresh_token: refresh_result.token,
+               active_account_id: active.account_id,
+               active_role: active.role,
+               memberships: memberships
+             }}
+          end
+          |> with_audit(fn data ->
+            %{
+              action: "user.linked_google",
+              actor_id: data.user.id,
+              account_id: data.active_account_id,
+              resource_type: "identity",
+              resource_id: data.user.id
+            }
+          end)
+      end
+    end
+  end
+
+  defp oauth_provider do
+    Application.get_env(
+      :elixir_api_core,
+      :oauth_provider,
+      ElixirApiCore.Auth.Providers.Google
+    )
+  end
+
+  @doc """
   Issues a new access token for a different account the user belongs to.
 
   The refresh token is unaffected (it is user-scoped, not account-scoped).

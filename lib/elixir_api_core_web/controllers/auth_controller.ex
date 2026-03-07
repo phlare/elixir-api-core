@@ -54,6 +54,33 @@ defmodule ElixirApiCoreWeb.AuthController do
     end
   end
 
+  def google_start(conn, _params) do
+    with {:ok, url} <- Auth.google_authorize_url() do
+      json(conn, %{data: %{authorize_url: url}})
+    end
+  end
+
+  def google_callback(conn, params) do
+    with {:ok, result} <- Auth.google_callback(params) do
+      status = if Map.has_key?(result, :account), do: :created, else: :ok
+
+      data =
+        %{
+          user: user_json(result.user),
+          access_token: result.access_token,
+          refresh_token: result.refresh_token
+        }
+        |> maybe_put(:account, result[:account], &account_json/1)
+        |> maybe_put(:accounts, result[:memberships], fn memberships ->
+          Enum.map(memberships, fn m -> %{account_id: m.account_id, role: m.role} end)
+        end)
+
+      conn
+      |> put_status(status)
+      |> json(%{data: data})
+    end
+  end
+
   def switch_account(conn, %{"account_id" => account_id}) do
     user_id = conn.assigns.current_user.id
 
@@ -75,4 +102,7 @@ defmodule ElixirApiCoreWeb.AuthController do
   defp account_json(account) do
     %{id: account.id, name: account.name}
   end
+
+  defp maybe_put(map, _key, nil, _transform), do: map
+  defp maybe_put(map, key, value, transform), do: Map.put(map, key, transform.(value))
 end
