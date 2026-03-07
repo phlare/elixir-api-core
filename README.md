@@ -1,5 +1,11 @@
 # Elixir API Core
 
+[![CI](https://github.com/phlare/elixir-api-core/actions/workflows/ci.yml/badge.svg)](https://github.com/phlare/elixir-api-core/actions/workflows/ci.yml)
+[![Elixir](https://img.shields.io/badge/Elixir-1.19.5-4B275F)](https://elixir-lang.org)
+[![OTP](https://img.shields.io/badge/OTP-28-blue)](https://www.erlang.org)
+[![Phoenix](https://img.shields.io/badge/Phoenix-1.8-orange)](https://www.phoenixframework.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Multi-tenant identity, authentication, and authorization template for Phoenix APIs. This is a reusable foundation — it contains no product logic, only auth/tenancy/identity primitives.
 
 ## Requirements
