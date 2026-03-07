@@ -192,23 +192,23 @@ Acceptance gate:
 - [x] `mix test`
 
 ### Phase 7: Final Hardening and Release Readiness
-- [ ] Update README with local setup, runtime pin, Postgres compose usage, and run/test commands.
-- [ ] Verify `mix format --check-formatted`.
-- [ ] Run full test suite and fix regressions.
-- [ ] Mark completed `v0.1` checklist items in this file.
-- [ ] Seed/adjust `v0.2` backlog based on what was deferred.
-- [ ] Close remaining review follow-ups not already covered in earlier phases.
+- [x] Update README with local setup, runtime pin, Postgres compose usage, and run/test commands.
+- [x] Verify `mix format --check-formatted`.
+- [x] Run full test suite and fix regressions.
+- [x] Mark completed `v0.1` checklist items in this file.
+- [x] Seed/adjust `v0.2` backlog based on what was deferred.
+- [x] Close remaining review follow-ups not already covered in earlier phases.
 
 Acceptance gate:
-- [ ] `mix format --check-formatted`
-- [ ] `mix test`
-- [ ] `mix phx.server` boots successfully
+- [x] `mix format --check-formatted`
+- [x] `mix test`
+- [x] `mix phx.server` boots successfully
 
 ## v0.1 Definition of Done
-- [ ] `mix test` passes.
-- [ ] `mix phx.server` runs.
-- [ ] Register/login/refresh/logout/switch-account flows work locally with Postgres.
-- [ ] OpenAPI contract checks pass in CI.
+- [x] `mix test` passes.
+- [x] `mix phx.server` runs.
+- [x] Register/login/refresh/logout/switch-account flows work locally with Postgres.
+- [x] OpenAPI contract checks pass in CI.
 
 ## v0.2 Backlog (Planned)
 - [ ] Observability expansion (metrics/traces packaging and defaults).
@@ -219,3 +219,6 @@ Acceptance gate:
 - [ ] Rate-limit expansion beyond auth endpoints.
 - [ ] API lifecycle CI enforcement for compatibility/deprecation rules.
 - [ ] Advanced readiness/dependency health matrix.
+- [ ] Refresh transport: HttpOnly cookie support (deferred from v0.1).
+- [ ] OpenAPI CI validation/lint integration.
+- [ ] Oban cron plugin for scheduled cleanup jobs.
