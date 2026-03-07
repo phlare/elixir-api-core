@@ -4,6 +4,7 @@ defmodule ElixirApiCore.Auth do
   alias ElixirApiCore.Accounts
   alias ElixirApiCore.Accounts.Membership
   alias ElixirApiCore.Accounts.User
+  alias ElixirApiCore.Audit
   alias ElixirApiCore.Auth.Identity
   alias ElixirApiCore.Auth.Password
   alias ElixirApiCore.Auth.Tokens
@@ -60,6 +61,15 @@ defmodule ElixirApiCore.Auth do
           {:error, reason} -> Repo.rollback(reason)
         end
       end)
+      |> with_audit(fn data ->
+        %{
+          action: "user.registered",
+          actor_id: data.user.id,
+          account_id: data.account.id,
+          resource_type: "user",
+          resource_id: data.user.id
+        }
+      end)
     end
   end
 
@@ -95,6 +105,15 @@ defmodule ElixirApiCore.Auth do
                memberships: memberships
              }}
           end
+          |> with_audit(fn data ->
+            %{
+              action: "user.logged_in",
+              actor_id: data.user.id,
+              account_id: data.active_account_id,
+              resource_type: "user",
+              resource_id: data.user.id
+            }
+          end)
       end
     end
   end
@@ -119,12 +138,21 @@ defmodule ElixirApiCore.Auth do
            ) do
       {:ok,
        %{
+         user_id: rotate_result.user_id,
          access_token: access_token,
          refresh_token: rotate_result.refresh_token,
          account_id: membership.account_id,
          role: membership.role
        }}
     end
+    |> with_audit(fn data ->
+      %{
+        action: "token.refreshed",
+        actor_id: data.user_id,
+        account_id: data.account_id,
+        resource_type: "refresh_token"
+      }
+    end)
   end
 
   @doc """
@@ -132,7 +160,16 @@ defmodule ElixirApiCore.Auth do
   """
   def logout(params) do
     raw_token = get_param(params, :refresh_token)
+
     Tokens.revoke_refresh_token(raw_token)
+    |> with_audit(fn token ->
+      %{
+        action: "user.logged_out",
+        actor_id: token.user_id,
+        resource_type: "refresh_token",
+        resource_id: token.id
+      }
+    end)
   end
 
   @doc """
@@ -156,6 +193,15 @@ defmodule ElixirApiCore.Auth do
              role: membership.role
            }}
         end
+        |> with_audit(fn data ->
+          %{
+            action: "account.switched",
+            actor_id: user_id,
+            account_id: data.account_id,
+            resource_type: "account",
+            resource_id: data.account_id
+          }
+        end)
     end
   end
 
@@ -253,6 +299,13 @@ defmodule ElixirApiCore.Auth do
     )
     |> Repo.all()
   end
+
+  defp with_audit({:ok, data} = result, attrs_fn) do
+    Audit.log(attrs_fn.(data))
+    result
+  end
+
+  defp with_audit(error, _attrs_fn), do: error
 
   defp get_param(params, key) when is_atom(key) do
     Map.get(params, key) || Map.get(params, Atom.to_string(key))

@@ -128,7 +128,7 @@ Acceptance gate:
   - [x] refresh (rotation and issuance)
   - [x] logout (token revoke)
   - [x] switch account (membership verification + new access token)
-- [ ] Add minimal audit event foundation and auth/membership event writes.
+- [x] Add minimal audit event foundation and auth/membership event writes.
 - [x] Define and test idempotent token-revoke semantics (`already revoked` behavior).
 - [x] Confirm and test refresh reuse-detection error contract at context boundary.
 
