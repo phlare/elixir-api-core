@@ -145,9 +145,7 @@ Versioned deliverables tracker for the platform template.
 - [x] Update docs (CLAUDE.md, README.md, DECISIONS.md) for v0.2 accuracy.
 - [x] Trim roadmap to template-appropriate scope.
 - [x] 130 tests passing, 0 dialyzer warnings.
-
-## Backlog
-
-- [ ] Tenant-safety middleware: Plug to reject queries missing account scope, compile-time checks, test helpers.
-- [ ] Oban `Cron` plugin for scheduled cleanup jobs (e.g. daily `CleanupExpiredTokensWorker`).
-- [ ] OpenAPI CI validation/lint and breaking-change detection.
+- [x] Tenant-safety middleware: `RequireAccountScope` plug, `Repo.Scoped` query helpers, `setup_tenant_pair` test helper.
+- [x] Oban `Cron` plugin scheduling `CleanupExpiredTokensWorker` daily at 03:00 UTC.
+- [x] OpenAPI CI validation (Spectral lint) and breaking-change detection (oasdiff) in GitHub Actions.
+- [x] 145 tests passing.

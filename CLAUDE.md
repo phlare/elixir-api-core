@@ -78,12 +78,13 @@ Configurable `OAuthProvider` behaviour with a default Google adapter. Test suite
 
 ### Background Jobs
 
-Oban with `default` and `maintenance` queues. Includes an example worker and a `CleanupExpiredTokensWorker` that removes expired/revoked refresh tokens.
+Oban with `default` and `maintenance` queues. `CleanupExpiredTokensWorker` runs daily at 03:00 UTC via `Oban.Plugins.Cron` to remove expired/revoked refresh tokens. Includes an example worker for job conventions.
 
-### Key Invariants
+### Tenant Safety
 
 - **Owner invariant**: every account must always have at least one `owner` membership. Enforced transactionally in `ElixirApiCore.Accounts` using `SELECT FOR UPDATE` row locking before any role change or membership deletion.
-- **Account scoping**: all queries must be account-scoped; cross-account leakage is prevented at the context layer.
+- **Account scoping**: use `ElixirApiCore.Repo.Scoped` helpers (`where_account/2`, `scoped_get/3`, `scoped_all/2`) for all account-scoped queries. Guards reject nil `account_id` at runtime.
+- **RequireAccountScope plug**: wired into the `:authenticated` pipeline as defense-in-depth; halts with 403 if `current_account_id` is missing.
 
 ### Configuration
 
@@ -98,10 +99,11 @@ All API errors use a stable envelope:
 
 ## Testing
 
-- 130 tests, 0 failures
+- 145 tests, 0 failures
 - Uses `DataCase` (SQL Sandbox, async-safe) for DB tests and `ConnCase` for controller tests
 - Test factories live in `test/support/fixtures/accounts_fixtures.ex`
 - `conn_with_token/2` helper in `ConnCase` for authenticated request tests
+- `setup_tenant_pair/0` helper in `DataCase` for cross-tenant isolation tests
 - Auth tests cover JWT lifecycle, refresh token rotation, reuse detection, and rate limit windows
 - Membership invariant tests use concurrent transactions to verify owner protection
 - Google OAuth tests use a mock provider configured in `config/test.exs`

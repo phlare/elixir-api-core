@@ -37,7 +37,13 @@ config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
 
 config :elixir_api_core, Oban,
   repo: ElixirApiCore.Repo,
-  queues: [default: 10, maintenance: 5]
+  queues: [default: 10, maintenance: 5],
+  plugins: [
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"0 3 * * *", ElixirApiCore.Workers.CleanupExpiredTokensWorker}
+     ]}
+  ]
 
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,

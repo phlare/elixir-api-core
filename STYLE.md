@@ -129,6 +129,27 @@ end
 - Compare with `DateTime.compare/2`, not operators
 - Tests inject time via `opts`: `issue_access_token(id, id, :owner, now: ~U[...])`
 
+## Tenant Safety
+
+Use `ElixirApiCore.Repo.Scoped` for all account-scoped queries:
+```elixir
+import ElixirApiCore.Repo.Scoped
+
+# Filter any queryable by account
+Membership |> where_account(account_id) |> Repo.all()
+
+# Scoped fetch by primary key (returns nil if wrong account)
+scoped_get(Membership, id, account_id)
+
+# Scoped fetch that raises on miss
+scoped_get!(Membership, id, account_id)
+```
+
+- Guards on `account_id` (`when is_binary(account_id)`) prevent nil from slipping through
+- Queries that are legitimately unscoped (user lookup by email, token lookup by hash) use `Repo` directly
+- The `RequireAccountScope` plug in the `:authenticated` pipeline halts if `current_account_id` is missing
+- Use `setup_tenant_pair/0` in tests to create two isolated tenant contexts and assert no cross-tenant leakage
+
 ## Workers (Oban)
 
 - `use Oban.Worker, queue: :queue_name`
