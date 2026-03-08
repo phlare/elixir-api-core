@@ -159,17 +159,21 @@ defmodule ElixirApiCore.Auth do
   Revokes a refresh token. Idempotent — revoking an already-revoked token succeeds.
   """
   def logout(params) do
-    raw_token = get_param(params, :refresh_token)
+    case get_param(params, :refresh_token) do
+      nil ->
+        {:error, :missing_refresh_token}
 
-    Tokens.revoke_refresh_token(raw_token)
-    |> with_audit(fn token ->
-      %{
-        action: "user.logged_out",
-        actor_id: token.user_id,
-        resource_type: "refresh_token",
-        resource_id: token.id
-      }
-    end)
+      raw_token ->
+        Tokens.revoke_refresh_token(raw_token)
+        |> with_audit(fn token ->
+          %{
+            action: "user.logged_out",
+            actor_id: token.user_id,
+            resource_type: "refresh_token",
+            resource_id: token.id
+          }
+        end)
+    end
   end
 
   @doc """

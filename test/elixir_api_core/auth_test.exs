@@ -201,6 +201,10 @@ defmodule ElixirApiCore.AuthTest do
     test "returns error for invalid refresh token" do
       assert {:error, :invalid_refresh_token} = Auth.logout(%{refresh_token: "garbage"})
     end
+
+    test "returns error when refresh token is missing" do
+      assert {:error, :missing_refresh_token} = Auth.logout(%{})
+    end
   end
 
   describe "switch_account/2" do
