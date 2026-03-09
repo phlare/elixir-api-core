@@ -1,62 +1,44 @@
-# Platform Templates Strategy
+# Platform Templates
 
-This repository is one of a set of reusable templates intended to reduce setup time for new services.
-
-Templates are designed to be:
-- generic
-- functional
-- opinionated
-- easy to extend
-- devoid of business domain logic
-
----
+Reusable project templates that provide infrastructure plumbing with zero business logic. Product services are created from these templates and then diverge freely.
 
 ## Template Repositories
 
-### elixir-api-core
-Phoenix API starter providing:
-- accounts/users/memberships
-- identity model (password + OAuth providers)
-- JWT access + refresh auth
-- RBAC v1 scaffolding
-- baseline API conventions
-- Oban background job wiring
-- health endpoint and dev ergonomics
+| Template            | Purpose                   | Stack                                           |
+| ------------------- | ------------------------- | ----------------------------------------------- |
+| **elixir-api-core** | Backend API services      | Phoenix, Ecto, Postgres, JWT auth, multi-tenant |
+| **node-edge-core**  | Edge/integration services | Fastify, Zod, Pino, TypeScript                  |
+| **web-app-core**    | Frontend SPA applications | Vite, React, TypeScript, Tailwind               |
 
-### node-edge-core
-TypeScript service starter intended for:
-- Slack adapter services
-- MCP servers
-- webhook receivers
-- small integration services
+## What Belongs in a Template
 
-It provides:
-- strict TS + lint/test
-- env validation
-- logging + request id
-- health endpoint
-- typed client to elixir-api-core services
+- Project scaffolding and build configuration
+- Environment validation and configuration patterns
+- Auth flow and token management
+- API client with shared envelope handling
+- Testing infrastructure and helpers
+- CI/CD pipeline
+- Linting, formatting, and precommit checks
+- Documentation (CLAUDE.md, AGENTS.md, STYLE.md, etc.)
 
----
+## What Does NOT Belong in a Template
 
-## What Must Not Go Into Templates
-- Product-specific schemas and workflows
-- Feature-specific endpoints
-- Business rules that do not generalize
-- One-off hacks for a single downstream project
-
-If something is genuinely general-purpose and will be used across multiple services,
-it should be upstreamed into the template.
-
----
+- Domain-specific models, pages, or business logic
+- Product-specific API endpoints or routes
+- Feature flags or product configuration
+- Third-party integrations specific to one product
 
 ## Versioning
-Templates should be versioned with tags (v0.1, v0.2, ...).
 
-Downstream services should record which template version they started from.
+Templates are versioned independently. Product repos created from templates are not kept in sync — they diverge freely with domain logic. If a product repo develops a generally useful pattern, it may be upstreamed to the template as a new version.
 
----
+## Shared Conventions
 
-## Upgrade Philosophy
-Downstream repos are not required to “merge forward” from template changes.
-Templates are a starting point, not a dependency.
+All templates share:
+
+- Composition root pattern (single entry point reads environment)
+- Zod for runtime validation (JS templates) / Ecto for schema validation (Elixir)
+- Strict type checking (TypeScript strict mode / Dialyzer)
+- Standard response envelope (`{ "data": ... }` / `{ "error": ... }`)
+- Automated linting and formatting
+- GitHub Actions CI
