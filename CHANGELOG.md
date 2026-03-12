@@ -8,8 +8,6 @@ Versioned deliverables tracker for the platform template.
 - `docs/ARCHITECTURE.md`
 - `docs/API_SPEC.md`
 - `docs/DECISIONS.md`
-- `docs/PLATFORM_TEMPLATES.md`
-
 ---
 
 ## v0.0.1 — Scaffold and Baseline
@@ -149,3 +147,12 @@ Versioned deliverables tracker for the platform template.
 - [x] Oban `Cron` plugin scheduling `CleanupExpiredTokensWorker` daily at 03:00 UTC.
 - [x] OpenAPI CI validation (Spectral lint) and breaking-change detection (oasdiff) in GitHub Actions.
 - [x] 145 tests passing.
+
+---
+
+## v0.2.1 — Bug Fix and Housekeeping
+
+- [x] Fix: logout crashes when no refresh token provided.
+- [x] Add GitHub Sponsors funding configuration.
+- [x] Add web-app-core cross-links to README.
+- [x] Remove `docs/PLATFORM_TEMPLATES.md` (moved to `tiny-inbox-product/docs/`).

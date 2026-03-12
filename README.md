@@ -94,14 +94,15 @@ Dev/test use plaintext defaults in `config/config.exs`. Production requires thes
 
 ## Related Templates
 
-This is one of two reusable service templates. They share API conventions and response envelopes but are otherwise independent.
+This is one of three reusable service templates. They share API conventions and response envelopes but are otherwise independent.
 
 | Template | Purpose | Stack |
 |----------|---------|-------|
 | **elixir-api-core** (this repo) | Core backend APIs | Elixir, Phoenix, PostgreSQL |
 | [**node-edge-core**](https://github.com/phlare/node-edge-core) | Edge/integration services | TypeScript, Fastify, Zod |
+| [**web-app-core**](https://github.com/phlare/web-app-core) | Frontend SPA | TypeScript, React, Vite, Tailwind |
 
-Product services are created *from* these templates and then diverge freely with domain logic. They're designed to work together — edge services built from node-edge-core call backend APIs built from elixir-api-core.
+Product apps are created *from* these templates and then diverge freely with domain logic. They're designed to work together — a frontend built from web-app-core calls a backend API built from elixir-api-core, while edge services built from node-edge-core handle integrations.
 
 ## Project Status
 
