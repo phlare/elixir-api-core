@@ -20,8 +20,16 @@ if System.get_env("PHX_SERVER") do
   config :elixir_api_core, ElixirApiCoreWeb.Endpoint, server: true
 end
 
-config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+http_opts = [port: String.to_integer(System.get_env("PORT", "4000"))]
+
+http_opts =
+  if config_env() == :dev do
+    Keyword.put(http_opts, :thousand_island_options, read_timeout: 300_000)
+  else
+    http_opts
+  end
+
+config :elixir_api_core, ElixirApiCoreWeb.Endpoint, http: http_opts
 
 if config_env() == :prod do
   database_url =
