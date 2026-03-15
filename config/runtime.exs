@@ -65,6 +65,14 @@ if config_env() == :prod do
     jwt_secret: jwt_secret,
     refresh_token_pepper: refresh_token_pepper
 
+  cors_origins =
+    case System.get_env("CORS_ALLOWED_ORIGINS") do
+      nil -> []
+      origins -> String.split(origins, ",", trim: true)
+    end
+
+  config :cors_plug, origin: cors_origins
+
   host = System.get_env("PHX_HOST") || "example.com"
 
   config :elixir_api_core, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")

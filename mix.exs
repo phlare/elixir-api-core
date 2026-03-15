@@ -10,6 +10,7 @@ defmodule ElixirApiCore.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      dialyzer: [plt_add_apps: [:ex_unit]],
       listeners: [Phoenix.CodeReloader]
     ]
   end
@@ -52,6 +53,7 @@ defmodule ElixirApiCore.MixProject do
       {:oban, "~> 2.19"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
+      {:cors_plug, "~> 3.0"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
