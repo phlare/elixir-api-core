@@ -93,6 +93,16 @@ defmodule ElixirApiCoreWeb.FallbackController do
     )
   end
 
+  def call(conn, {:error, :invalid_oauth_state}) do
+    conn
+    |> put_status(:forbidden)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "invalid_oauth_state",
+      message: "Invalid or missing OAuth state parameter"
+    )
+  end
+
   def call(conn, {:error, :google_oauth_not_configured}) do
     conn
     |> put_status(:service_unavailable)

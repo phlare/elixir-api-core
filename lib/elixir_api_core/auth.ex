@@ -185,7 +185,10 @@ defmodule ElixirApiCore.Auth do
   """
   def google_authorize_url do
     state = Base.url_encode64(:crypto.strong_rand_bytes(16), padding: false)
-    oauth_provider().authorize_url(state)
+
+    with {:ok, url} <- oauth_provider().authorize_url(state) do
+      {:ok, {url, state}}
+    end
   end
 
   @doc """

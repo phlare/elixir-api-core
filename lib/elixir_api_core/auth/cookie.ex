@@ -18,6 +18,11 @@ defmodule ElixirApiCore.Auth.Cookie do
     config(:name, "_refresh_token")
   end
 
+  @doc "Returns whether cookies should use the Secure flag."
+  def secure? do
+    config(:secure, false)
+  end
+
   @doc "Returns cookie options for Plug.Conn.put_resp_cookie/4."
   def options do
     [
