@@ -3,6 +3,7 @@ defmodule ElixirApiCoreWeb.AuthController do
 
   alias ElixirApiCore.Auth
   alias ElixirApiCore.Auth.Cookie
+  alias ElixirApiCore.Auth.RateLimits
 
   action_fallback ElixirApiCoreWeb.FallbackController
 
@@ -23,7 +24,8 @@ defmodule ElixirApiCoreWeb.AuthController do
   end
 
   def login(conn, params) do
-    with {:ok, result} <- Auth.login(params) do
+    with {:ok, _remaining} <- RateLimits.check_login(client_ip(conn)),
+         {:ok, result} <- Auth.login(params) do
       conn
       |> put_refresh_cookie(result.refresh_token)
       |> json(%{
@@ -44,7 +46,8 @@ defmodule ElixirApiCoreWeb.AuthController do
   def refresh(conn, params) do
     params = maybe_read_cookie_token(params, conn)
 
-    with {:ok, result} <- Auth.refresh(params) do
+    with {:ok, _remaining} <- RateLimits.check_refresh(client_ip(conn)),
+         {:ok, result} <- Auth.refresh(params) do
       conn
       |> put_refresh_cookie(result.refresh_token)
       |> json(%{
@@ -66,14 +69,28 @@ defmodule ElixirApiCoreWeb.AuthController do
     end
   end
 
+  @oauth_state_cookie "_oauth_state"
+  @oauth_state_max_age 600
+
   def google_start(conn, _params) do
-    with {:ok, url} <- Auth.google_authorize_url() do
-      json(conn, %{data: %{authorize_url: url}})
+    with {:ok, {url, state}} <- Auth.google_authorize_url() do
+      conn
+      |> put_resp_cookie(@oauth_state_cookie, state,
+        http_only: true,
+        secure: Cookie.secure?(),
+        same_site: "Lax",
+        max_age: @oauth_state_max_age,
+        sign: true
+      )
+      |> json(%{data: %{authorize_url: url}})
     end
   end
 
   def google_callback(conn, params) do
-    with {:ok, result} <- Auth.google_callback(params) do
+    conn = fetch_cookies(conn, signed: [@oauth_state_cookie])
+
+    with :ok <- verify_oauth_state(conn, params),
+         {:ok, result} <- Auth.google_callback(params) do
       status = if Map.has_key?(result, :account), do: :created, else: :ok
 
       data =
@@ -88,6 +105,7 @@ defmodule ElixirApiCoreWeb.AuthController do
         end)
 
       conn
+      |> delete_resp_cookie(@oauth_state_cookie, sign: true)
       |> put_status(status)
       |> put_refresh_cookie(result.refresh_token)
       |> json(%{data: data})
@@ -137,6 +155,21 @@ defmodule ElixirApiCoreWeb.AuthController do
         "" -> params
         token -> Map.put(params, "refresh_token", token)
       end
+    end
+  end
+
+  defp client_ip(conn) do
+    conn.remote_ip |> :inet.ntoa() |> to_string()
+  end
+
+  defp verify_oauth_state(conn, params) do
+    cookie_state = conn.cookies[@oauth_state_cookie]
+    param_state = Map.get(params, "state") || Map.get(params, :state)
+
+    cond do
+      is_nil(cookie_state) or is_nil(param_state) -> {:error, :invalid_oauth_state}
+      Plug.Crypto.secure_compare(cookie_state, param_state) -> :ok
+      true -> {:error, :invalid_oauth_state}
     end
   end
 

@@ -6,9 +6,11 @@ defmodule ElixirApiCore.Auth.GoogleOAuthTest do
   import ElixirApiCore.AccountsFixtures
 
   describe "google_authorize_url/0" do
-    test "returns an authorize URL" do
-      assert {:ok, url} = Auth.google_authorize_url()
+    test "returns an authorize URL and state" do
+      assert {:ok, {url, state}} = Auth.google_authorize_url()
       assert url =~ "https://mock.oauth.example.com/authorize?state="
+      assert is_binary(state)
+      assert byte_size(state) > 0
     end
   end
 

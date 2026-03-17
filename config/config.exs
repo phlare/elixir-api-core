@@ -45,6 +45,12 @@ config :elixir_api_core, Oban,
      ]}
   ]
 
+# CORS — restrictive default; override in runtime.exs for prod
+config :cors_plug,
+  origin: ["http://localhost:3000", "http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  headers: ["Authorization", "Content-Type"]
+
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
   url: [host: "localhost"],

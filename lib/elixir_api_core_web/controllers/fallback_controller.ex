@@ -8,6 +8,17 @@ defmodule ElixirApiCoreWeb.FallbackController do
     |> render("validation_error.json", changeset: changeset)
   end
 
+  def call(conn, {:error, {:rate_limited, retry_after}}) do
+    conn
+    |> put_resp_header("retry-after", to_string(retry_after))
+    |> put_status(:too_many_requests)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "rate_limited",
+      message: "Too many requests, please try again later"
+    )
+  end
+
   def call(conn, {:error, :invalid_credentials}) do
     conn
     |> put_status(:unauthorized)
@@ -29,6 +40,16 @@ defmodule ElixirApiCoreWeb.FallbackController do
     |> render("error.json",
       code: "password_too_short",
       message: "Password must be at least 8 characters"
+    )
+  end
+
+  def call(conn, {:error, :password_too_long}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "password_too_long",
+      message: "Password must be at most 128 characters"
     )
   end
 
@@ -80,6 +101,16 @@ defmodule ElixirApiCoreWeb.FallbackController do
     |> render("error.json",
       code: "oauth_userinfo_failed",
       message: "Failed to retrieve user info from provider"
+    )
+  end
+
+  def call(conn, {:error, :invalid_oauth_state}) do
+    conn
+    |> put_status(:forbidden)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "invalid_oauth_state",
+      message: "Invalid or missing OAuth state parameter"
     )
   end
 

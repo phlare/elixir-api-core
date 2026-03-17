@@ -36,6 +36,7 @@ defmodule ElixirApiCoreWeb.ConnCase do
 
   setup tags do
     ElixirApiCore.DataCase.setup_sandbox(tags)
+    ElixirApiCore.Auth.RateLimiter.reset()
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 

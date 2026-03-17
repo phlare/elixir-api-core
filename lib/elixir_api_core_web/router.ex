@@ -5,6 +5,10 @@ defmodule ElixirApiCoreWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :auth_security do
+    plug ElixirApiCoreWeb.Plugs.SecurityHeaders
+  end
+
   pipeline :authenticated do
     plug ElixirApiCoreWeb.Plugs.Auth
     plug ElixirApiCoreWeb.Plugs.RequireAccountScope
@@ -20,7 +24,7 @@ defmodule ElixirApiCoreWeb.Router do
 
   # Public auth endpoints
   scope "/api/v1", ElixirApiCoreWeb do
-    pipe_through :api
+    pipe_through [:api, :auth_security]
 
     post "/auth/register", AuthController, :register
     post "/auth/login", AuthController, :login
@@ -32,7 +36,7 @@ defmodule ElixirApiCoreWeb.Router do
 
   # Authenticated endpoints
   scope "/api/v1", ElixirApiCoreWeb do
-    pipe_through [:api, :authenticated]
+    pipe_through [:api, :auth_security, :authenticated]
 
     post "/auth/switch_account", AuthController, :switch_account
     get "/me", UserController, :me

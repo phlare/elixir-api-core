@@ -11,6 +11,7 @@ defmodule ElixirApiCore.Auth do
   alias ElixirApiCore.Repo
 
   @min_password_length 8
+  @max_password_length 128
 
   @doc """
   Registers a new user with email/password.
@@ -184,7 +185,10 @@ defmodule ElixirApiCore.Auth do
   """
   def google_authorize_url do
     state = Base.url_encode64(:crypto.strong_rand_bytes(16), padding: false)
-    oauth_provider().authorize_url(state)
+
+    with {:ok, url} <- oauth_provider().authorize_url(state) do
+      {:ok, {url, state}}
+    end
   end
 
   @doc """
@@ -397,6 +401,9 @@ defmodule ElixirApiCore.Auth do
 
       String.length(password) < @min_password_length ->
         {:error, :password_too_short}
+
+      String.length(password) > @max_password_length ->
+        {:error, :password_too_long}
 
       true ->
         {:ok,
