@@ -3,7 +3,8 @@ defmodule ElixirApiCoreWeb.Plugs.SecurityHeadersTest do
 
   describe "security headers on public auth endpoints" do
     test "POST /auth/register sets security headers", %{conn: conn} do
-      conn = post(conn, "/api/v1/auth/register", %{email: "sh@example.com", password: "password123!"})
+      conn =
+        post(conn, "/api/v1/auth/register", %{email: "sh@example.com", password: "password123!"})
 
       assert get_resp_header(conn, "x-content-type-options") == ["nosniff"]
       assert get_resp_header(conn, "cache-control") == ["no-store"]
@@ -12,7 +13,8 @@ defmodule ElixirApiCoreWeb.Plugs.SecurityHeadersTest do
     test "POST /auth/login sets security headers", %{conn: conn} do
       post(conn, "/api/v1/auth/register", %{email: "sh2@example.com", password: "password123!"})
 
-      conn = post(conn, "/api/v1/auth/login", %{email: "sh2@example.com", password: "password123!"})
+      conn =
+        post(conn, "/api/v1/auth/login", %{email: "sh2@example.com", password: "password123!"})
 
       assert get_resp_header(conn, "x-content-type-options") == ["nosniff"]
       assert get_resp_header(conn, "cache-control") == ["no-store"]
@@ -28,8 +30,11 @@ defmodule ElixirApiCoreWeb.Plugs.SecurityHeadersTest do
 
   describe "security headers on authenticated auth endpoints" do
     test "POST /auth/switch_account sets security headers", %{conn: conn} do
-      conn_resp = post(conn, "/api/v1/auth/register", %{email: "sh3@example.com", password: "password123!"})
-      %{"data" => %{"access_token" => token, "account" => %{"id" => account_id}}} = json_response(conn_resp, 201)
+      conn_resp =
+        post(conn, "/api/v1/auth/register", %{email: "sh3@example.com", password: "password123!"})
+
+      %{"data" => %{"access_token" => token, "account" => %{"id" => account_id}}} =
+        json_response(conn_resp, 201)
 
       conn =
         conn

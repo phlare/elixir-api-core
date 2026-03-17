@@ -83,7 +83,10 @@ defmodule ElixirApiCoreWeb.GoogleOAuthControllerTest do
       assert json_response(start_conn, 200)
 
       conn = recycle(start_conn)
-      conn = get(conn, "/api/v1/auth/google/callback", %{code: "valid_code", state: "wrong_state"})
+
+      conn =
+        get(conn, "/api/v1/auth/google/callback", %{code: "valid_code", state: "wrong_state"})
+
       resp = json_response(conn, 403)
 
       assert resp["error"]["code"] == "invalid_oauth_state"
