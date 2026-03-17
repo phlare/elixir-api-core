@@ -32,6 +32,16 @@ defmodule ElixirApiCoreWeb.FallbackController do
     )
   end
 
+  def call(conn, {:error, :password_too_long}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "password_too_long",
+      message: "Password must be at most 128 characters"
+    )
+  end
+
   def call(conn, {:error, :invalid_refresh_token}) do
     conn
     |> put_status(:unauthorized)

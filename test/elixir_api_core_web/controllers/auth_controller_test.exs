@@ -43,6 +43,13 @@ defmodule ElixirApiCoreWeb.AuthControllerTest do
       resp = json_response(conn, 422)
       assert resp["error"]["code"] == "password_too_short"
     end
+
+    test "returns error for password exceeding 128 characters", %{conn: conn} do
+      long_password = String.duplicate("a", 129)
+      conn = post(conn, "/api/v1/auth/register", %{email: "a@b.com", password: long_password})
+      resp = json_response(conn, 422)
+      assert resp["error"]["code"] == "password_too_long"
+    end
   end
 
   describe "POST /api/v1/auth/login" do

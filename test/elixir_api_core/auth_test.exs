@@ -79,6 +79,16 @@ defmodule ElixirApiCore.AuthTest do
     test "returns error when password is too short" do
       assert {:error, :password_too_short} = Auth.register(%{email: "a@b.com", password: "short"})
     end
+
+    test "returns error when password exceeds 128 characters" do
+      long_password = String.duplicate("a", 129)
+      assert {:error, :password_too_long} = Auth.register(%{email: "a@b.com", password: long_password})
+    end
+
+    test "accepts password of exactly 128 characters" do
+      password = String.duplicate("a", 128)
+      assert {:ok, _} = Auth.register(%{email: "max@example.com", password: password})
+    end
   end
 
   describe "login/1" do

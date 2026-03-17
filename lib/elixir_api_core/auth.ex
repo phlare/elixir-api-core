@@ -11,6 +11,7 @@ defmodule ElixirApiCore.Auth do
   alias ElixirApiCore.Repo
 
   @min_password_length 8
+  @max_password_length 128
 
   @doc """
   Registers a new user with email/password.
@@ -397,6 +398,9 @@ defmodule ElixirApiCore.Auth do
 
       String.length(password) < @min_password_length ->
         {:error, :password_too_short}
+
+      String.length(password) > @max_password_length ->
+        {:error, :password_too_long}
 
       true ->
         {:ok,
