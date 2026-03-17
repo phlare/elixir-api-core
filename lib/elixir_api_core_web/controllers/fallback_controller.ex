@@ -8,6 +8,17 @@ defmodule ElixirApiCoreWeb.FallbackController do
     |> render("validation_error.json", changeset: changeset)
   end
 
+  def call(conn, {:error, {:rate_limited, retry_after}}) do
+    conn
+    |> put_resp_header("retry-after", to_string(retry_after))
+    |> put_status(:too_many_requests)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "rate_limited",
+      message: "Too many requests, please try again later"
+    )
+  end
+
   def call(conn, {:error, :invalid_credentials}) do
     conn
     |> put_status(:unauthorized)

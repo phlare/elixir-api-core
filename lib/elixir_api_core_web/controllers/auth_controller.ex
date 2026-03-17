@@ -3,6 +3,7 @@ defmodule ElixirApiCoreWeb.AuthController do
 
   alias ElixirApiCore.Auth
   alias ElixirApiCore.Auth.Cookie
+  alias ElixirApiCore.Auth.RateLimits
 
   action_fallback ElixirApiCoreWeb.FallbackController
 
@@ -23,7 +24,8 @@ defmodule ElixirApiCoreWeb.AuthController do
   end
 
   def login(conn, params) do
-    with {:ok, result} <- Auth.login(params) do
+    with {:ok, _remaining} <- RateLimits.check_login(client_ip(conn)),
+         {:ok, result} <- Auth.login(params) do
       conn
       |> put_refresh_cookie(result.refresh_token)
       |> json(%{
@@ -44,7 +46,8 @@ defmodule ElixirApiCoreWeb.AuthController do
   def refresh(conn, params) do
     params = maybe_read_cookie_token(params, conn)
 
-    with {:ok, result} <- Auth.refresh(params) do
+    with {:ok, _remaining} <- RateLimits.check_refresh(client_ip(conn)),
+         {:ok, result} <- Auth.refresh(params) do
       conn
       |> put_refresh_cookie(result.refresh_token)
       |> json(%{
@@ -153,6 +156,10 @@ defmodule ElixirApiCoreWeb.AuthController do
         token -> Map.put(params, "refresh_token", token)
       end
     end
+  end
+
+  defp client_ip(conn) do
+    conn.remote_ip |> :inet.ntoa() |> to_string()
   end
 
   defp verify_oauth_state(conn, params) do

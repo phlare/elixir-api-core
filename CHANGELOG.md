@@ -150,6 +150,29 @@ Versioned deliverables tracker for the platform template.
 
 ---
 
+## v0.3.0 — Security Hardening
+
+- [x] Add security headers plug (`X-Content-Type-Options: nosniff`, `Cache-Control: no-store`) on auth endpoints.
+- [x] Add 1MB request body size limit to `Plug.Parsers` (default 8MB is excessive for a JSON API).
+- [x] Add maximum password length validation (128 chars) to prevent bcrypt truncation and CPU exhaustion.
+- [x] Validate OAuth state parameter on callback (signed cookie + `secure_compare`).
+- [x] Configure CORS with explicit allowed origins per environment (dev: localhost, test: all, prod: env var).
+- [x] Wire up rate limiting on login and refresh endpoints (keyed by client IP, 429 + `Retry-After`).
+- [x] Fix: move Bandit `read_timeout` to `runtime.exs` so it isn't overridden.
+- [x] Fix: add `localhost:5173` (Vite) to default CORS origins.
+- [x] 159 tests passing.
+
+---
+
+## v0.2.2 — CORS Support
+
+- [x] Add `cors_plug` dependency and wire `CORSPlug` into endpoint.
+- [x] Configure `CORS_ALLOWED_ORIGINS` env var for production.
+- [x] Fix Dialyzer warnings on ExUnit assertion types.
+- [x] Suppress Bandit idle connection timeout noise in dev.
+
+---
+
 ## v0.2.1 — Bug Fix and Housekeeping
 
 - [x] Fix: logout crashes when no refresh token provided.
