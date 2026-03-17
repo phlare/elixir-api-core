@@ -29,7 +29,7 @@ defmodule ElixirApiCore.Auth.Cookie do
       http_only: config(:http_only, true),
       secure: config(:secure, false),
       same_site: config(:same_site, "Strict"),
-      max_age: config(:max_age, 2_592_000),
+      max_age: config(:max_age, 604_800),
       path: config(:path, "/api/v1/auth")
     ]
   end
