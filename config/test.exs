@@ -26,6 +26,9 @@ config :elixir_api_core, Oban, testing: :inline
 # Use mock OAuth provider in tests
 config :elixir_api_core, :oauth_provider, ElixirApiCore.Auth.MockOAuthProvider
 
+# Allow all origins in test
+config :cors_plug, origin: ["*"]
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 

@@ -79,7 +79,10 @@ if config_env() == :prod do
       origins -> String.split(origins, ",", trim: true)
     end
 
-  config :cors_plug, origin: cors_origins
+  config :cors_plug,
+    origin: cors_origins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    headers: ["Authorization", "Content-Type"]
 
   host = System.get_env("PHX_HOST") || "example.com"
 
