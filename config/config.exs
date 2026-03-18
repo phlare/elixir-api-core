@@ -49,7 +49,8 @@ config :elixir_api_core, Oban,
 config :cors_plug,
   origin: ["http://localhost:3000", "http://localhost:5173"],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  headers: ["Authorization", "Content-Type"]
+  headers: ["Authorization", "Content-Type"],
+  credentials: true
 
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
