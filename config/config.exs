@@ -17,7 +17,7 @@ config :elixir_api_core, ElixirApiCore.Auth.Tokens,
   jwt_issuer: "elixir_api_core",
   jwt_secret: "dev_jwt_secret_change_me",
   access_token_ttl_seconds: 900,
-  refresh_token_ttl_seconds: 2_592_000,
+  refresh_token_ttl_seconds: 604_800,
   refresh_token_pepper: "dev_refresh_pepper_change_me"
 
 config :elixir_api_core, ElixirApiCore.Auth.Cookie,
@@ -27,7 +27,7 @@ config :elixir_api_core, ElixirApiCore.Auth.Cookie,
   http_only: true,
   secure: false,
   same_site: "Strict",
-  max_age: 2_592_000
+  max_age: 604_800
 
 config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
   login_limit: 5,
@@ -49,7 +49,8 @@ config :elixir_api_core, Oban,
 config :cors_plug,
   origin: ["http://localhost:3000", "http://localhost:5173"],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  headers: ["Authorization", "Content-Type"]
+  headers: ["Authorization", "Content-Type"],
+  credentials: true
 
 # Configure the endpoint
 config :elixir_api_core, ElixirApiCoreWeb.Endpoint,

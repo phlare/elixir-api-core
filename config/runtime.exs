@@ -82,7 +82,8 @@ if config_env() == :prod do
   config :cors_plug,
     origin: cors_origins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    headers: ["Authorization", "Content-Type"]
+    headers: ["Authorization", "Content-Type"],
+    credentials: true
 
   host = System.get_env("PHX_HOST") || "example.com"
 

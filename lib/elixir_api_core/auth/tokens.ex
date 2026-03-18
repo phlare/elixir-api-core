@@ -63,7 +63,7 @@ defmodule ElixirApiCore.Auth.Tokens do
     raw_token = generate_refresh_token()
     token_hash = hash_refresh_token(raw_token)
     now = now(opts)
-    ttl_seconds = Keyword.get(opts, :ttl_seconds, config(:refresh_token_ttl_seconds, 2_592_000))
+    ttl_seconds = Keyword.get(opts, :ttl_seconds, config(:refresh_token_ttl_seconds, 604_800))
     expires_at = DateTime.add(now, ttl_seconds, :second)
 
     attrs = %{
