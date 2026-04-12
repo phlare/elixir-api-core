@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Phoenix API template for multi-tenant identity, authentication, and authorization. This is a reusable foundation — it contains no product logic, only auth/tenancy/identity primitives. Elixir 1.19.5 + OTP 28.3.3 (pinned in `.tool-versions`).
 
+## Workflows
+
+See workspace-level commit workflow: `../.claude/instructions/commit_workflow.md`
+
 ## Commands
 
 ```bash
