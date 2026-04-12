@@ -8,7 +8,7 @@ Phoenix API template for multi-tenant identity, authentication, and authorizatio
 
 ## Workflows
 
-See workspace-level commit workflow: `../.claude/instructions/commit_workflow.md`
+See `.claude/instructions/commit_workflow.md` for precommit, conventional commits, and merge strategy.
 
 ## Commands
 
