@@ -8,7 +8,8 @@ Phoenix API template for multi-tenant identity, authentication, and authorizatio
 
 ## Workflows
 
-See `.claude/instructions/commit_workflow.md` for precommit, conventional commits, and merge strategy.
+- Commit workflow: `.claude/instructions/commit_workflow.md`
+- Dependabot PR merging: `.claude/instructions/dependabot_workflow.md`
 
 ## Commands
 
