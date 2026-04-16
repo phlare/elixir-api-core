@@ -41,7 +41,8 @@ config :elixir_api_core, Oban,
   plugins: [
     {Oban.Plugins.Cron,
      crontab: [
-       {"0 3 * * *", ElixirApiCore.Workers.CleanupExpiredTokensWorker}
+       {"0 3 * * *", ElixirApiCore.Workers.CleanupExpiredTokensWorker},
+       {"0 4 * * *", ElixirApiCore.Workers.CleanupDeletedUsersWorker}
      ]}
   ]
 

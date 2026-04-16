@@ -14,6 +14,11 @@ defmodule ElixirApiCoreWeb.Router do
     plug ElixirApiCoreWeb.Plugs.RequireAccountScope
   end
 
+  pipeline :system_admin do
+    plug ElixirApiCoreWeb.Plugs.Auth
+    plug ElixirApiCoreWeb.Plugs.RequireSystemAdmin
+  end
+
   # Health endpoints — no auth, no versioning
   scope "/", ElixirApiCoreWeb do
     pipe_through :api
@@ -40,5 +45,17 @@ defmodule ElixirApiCoreWeb.Router do
 
     post "/auth/switch_account", AuthController, :switch_account
     get "/me", UserController, :me
+    delete "/me", UserController, :delete_me
+  end
+
+  # System admin endpoints (no account scope required)
+  scope "/api/v1/admin", ElixirApiCoreWeb.Admin do
+    pipe_through [:api, :auth_security, :system_admin]
+
+    get "/users", UsersController, :index
+    get "/users/:id", UsersController, :show
+    delete "/users/:id", UsersController, :delete
+    post "/users/:id/restore", UsersController, :restore
+    delete "/users/:id/purge", UsersController, :purge
   end
 end

@@ -212,6 +212,9 @@ defmodule ElixirApiCore.Auth do
             nil ->
               create_google_user(user_info)
 
+            %{deleted_at: d} when not is_nil(d) ->
+              {:error, :invalid_credentials}
+
             existing_user ->
               link_google_identity(existing_user, user_info)
           end
@@ -228,6 +231,15 @@ defmodule ElixirApiCore.Auth do
 
   defp login_via_identity(identity) do
     user = Repo.get!(User, identity.user_id)
+
+    if not is_nil(user.deleted_at) do
+      {:error, :invalid_credentials}
+    else
+      login_via_identity_user(user)
+    end
+  end
+
+  defp login_via_identity_user(user) do
     memberships = get_user_memberships(user.id)
 
     case memberships do
@@ -389,6 +401,41 @@ defmodule ElixirApiCore.Auth do
     end
   end
 
+  @doc """
+  Self-service account deletion. Requires password confirmation (or typed phrase
+  for OAuth-only users). Soft-deletes the user and their solely-owned accounts.
+  """
+  def delete_my_account(%User{} = user, params) do
+    identities = Repo.all(from(i in Identity, where: i.user_id == ^user.id))
+    has_password = Enum.any?(identities, &(&1.provider == :password))
+
+    confirmation_result =
+      if has_password do
+        verify_user_password(user, get_param(params, :password))
+      else
+        text = get_param(params, :confirmation_text)
+
+        if is_binary(text) and String.trim(text) |> String.downcase() == "delete my account" do
+          :ok
+        else
+          {:error, :invalid_confirmation}
+        end
+      end
+
+    with :ok <- confirmation_result,
+         {:ok, _updated_user} <- Accounts.soft_delete_user(user) do
+      {:ok, :deleted}
+      |> with_audit(fn _ ->
+        %{
+          action: "user.self_deleted",
+          actor_id: user.id,
+          resource_type: "user",
+          resource_id: user.id
+        }
+      end)
+    end
+  end
+
   defp validate_register_params(params) do
     password = get_param(params, :password)
     email = get_param(params, :email)
@@ -445,6 +492,10 @@ defmodule ElixirApiCore.Auth do
   defp get_user_by_email(email) when is_binary(email) do
     case Repo.get_by(User, email: email |> String.trim() |> String.downcase()) do
       nil ->
+        Password.verify_password("dummy", nil)
+        {:error, :invalid_credentials}
+
+      %{deleted_at: d} when not is_nil(d) ->
         Password.verify_password("dummy", nil)
         {:error, :invalid_credentials}
 

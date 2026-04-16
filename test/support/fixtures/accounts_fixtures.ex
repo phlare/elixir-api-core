@@ -53,6 +53,14 @@ defmodule ElixirApiCore.AccountsFixtures do
     |> Repo.insert!()
   end
 
+  def system_admin_fixture(attrs \\ %{}) do
+    user = user_fixture(attrs)
+
+    user
+    |> Ecto.Changeset.change(%{is_system_admin: true})
+    |> Repo.update!()
+  end
+
   def refresh_token_fixture(attrs \\ %{}) do
     user = Map.get_lazy(attrs, :user, &user_fixture/0)
 

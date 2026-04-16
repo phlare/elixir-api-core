@@ -45,14 +45,22 @@ defmodule ElixirApiCoreWeb.Plugs.Auth do
   defp load_user(user_id) do
     case Repo.get(User, user_id) do
       nil -> {:error, :user_not_found}
+      %{deleted_at: d} when not is_nil(d) -> {:error, :user_not_found}
       user -> {:ok, user}
     end
   end
 
   defp load_membership(user_id, account_id) do
     case Repo.get_by(Membership, user_id: user_id, account_id: account_id) do
-      nil -> {:error, :membership_not_found}
-      membership -> {:ok, membership}
+      nil ->
+        {:error, :membership_not_found}
+
+      membership ->
+        # Reject memberships for soft-deleted accounts
+        case Repo.get(ElixirApiCore.Accounts.Account, account_id) do
+          %{deleted_at: d} when not is_nil(d) -> {:error, :membership_not_found}
+          _ -> {:ok, membership}
+        end
     end
   end
 end

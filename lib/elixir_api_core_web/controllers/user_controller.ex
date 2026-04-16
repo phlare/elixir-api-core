@@ -1,6 +1,10 @@
 defmodule ElixirApiCoreWeb.UserController do
   use ElixirApiCoreWeb, :controller
 
+  alias ElixirApiCore.Auth
+
+  action_fallback ElixirApiCoreWeb.FallbackController
+
   def me(conn, _params) do
     user = conn.assigns.current_user
     membership = conn.assigns.current_membership
@@ -17,5 +21,13 @@ defmodule ElixirApiCoreWeb.UserController do
         membership_id: membership.id
       }
     })
+  end
+
+  def delete_me(conn, params) do
+    user = conn.assigns.current_user
+
+    with {:ok, :deleted} <- Auth.delete_my_account(user, params) do
+      send_resp(conn, :no_content, "")
+    end
   end
 end

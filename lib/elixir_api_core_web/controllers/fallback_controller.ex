@@ -133,4 +133,45 @@ defmodule ElixirApiCoreWeb.FallbackController do
       message: "User has no active account membership"
     )
   end
+
+  def call(conn, {:error, :user_not_found}) do
+    conn
+    |> put_status(:not_found)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json", code: "user_not_found", message: "User not found")
+  end
+
+  def call(conn, {:error, :user_already_deleted}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json", code: "user_already_deleted", message: "User is already deleted")
+  end
+
+  def call(conn, {:error, :user_not_deleted}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json", code: "user_not_deleted", message: "User is not deleted")
+  end
+
+  def call(conn, {:error, :invalid_confirmation}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "invalid_confirmation",
+      message: "Please confirm by entering your password or typing 'delete my account'"
+    )
+  end
+
+  def call(conn, {:error, :cannot_delete_self}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "cannot_delete_self",
+      message: "Use DELETE /api/v1/me to delete your own account"
+    )
+  end
 end

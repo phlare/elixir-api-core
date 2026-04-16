@@ -251,4 +251,57 @@ defmodule ElixirApiCore.AuthTest do
       assert {:error, :account_not_found} = Auth.switch_account(reg.user.id, fake_id)
     end
   end
+
+  describe "soft-deleted user rejection" do
+    setup do
+      {:ok, result} =
+        Auth.register(%{
+          email: "del-reject-#{System.unique_integer([:positive])}@example.com",
+          password: "password123!"
+        })
+
+      {:ok, _} = ElixirApiCore.Accounts.soft_delete_user(result.user)
+      %{email: result.user.email, refresh_token: result.refresh_token}
+    end
+
+    test "deleted user cannot login", %{email: email} do
+      assert {:error, :invalid_credentials} =
+               Auth.login(%{email: email, password: "password123!"})
+    end
+
+    test "deleted user cannot refresh token", %{refresh_token: token} do
+      assert {:error, _reason} = Auth.refresh(%{refresh_token: token})
+    end
+
+    test "deleted user cannot login via Google OAuth" do
+      uid = "google-deleted-#{System.unique_integer([:positive])}"
+      user = ElixirApiCore.AccountsFixtures.user_fixture()
+      account = ElixirApiCore.AccountsFixtures.account_fixture()
+
+      ElixirApiCore.AccountsFixtures.membership_fixture(%{
+        user: user,
+        account: account,
+        role: :owner
+      })
+
+      # Create Google identity
+      %ElixirApiCore.Auth.Identity{}
+      |> ElixirApiCore.Auth.Identity.changeset(%{
+        user_id: user.id,
+        provider: :google,
+        provider_uid: uid
+      })
+      |> ElixirApiCore.Repo.insert!()
+
+      # Soft-delete the user
+      {:ok, _} = ElixirApiCore.Accounts.soft_delete_user(user)
+
+      # Mock OAuth to return this user's provider_uid
+      Process.put(:mock_oauth_uid, uid)
+
+      # The login_via_identity path should reject the deleted user
+      assert {:error, :invalid_credentials} =
+               Auth.google_callback(%{code: "valid_code"})
+    end
+  end
 end
