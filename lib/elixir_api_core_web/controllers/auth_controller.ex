@@ -128,19 +128,16 @@ defmodule ElixirApiCoreWeb.AuthController do
 
   def verify_email(conn, %{"token" => token}) when is_binary(token) do
     case Auth.verify_email(token) do
-      {:ok, _user} ->
-        redirect(conn, external: app_url("/?email_verified=1"))
-
-      {:error, :email_already_verified} ->
-        redirect(conn, external: app_url("/?email_verified=1"))
-
-      {:error, _reason} ->
-        redirect(conn, external: app_url("/?error=invalid_token"))
+      {:ok, _user} -> json(conn, %{data: %{status: "ok"}})
+      # Treat idempotent repeat clicks as success so the frontend can show a
+      # consistent "verified" state without needing a separate message.
+      {:error, :email_already_verified} -> json(conn, %{data: %{status: "ok"}})
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  def verify_email(conn, _params) do
-    redirect(conn, external: app_url("/?error=invalid_token"))
+  def verify_email(_conn, _params) do
+    {:error, :invalid_email_token}
   end
 
   def send_verification(conn, _params) do
@@ -241,12 +238,4 @@ defmodule ElixirApiCoreWeb.AuthController do
 
   defp maybe_put(map, _key, nil, _transform), do: map
   defp maybe_put(map, key, value, transform), do: Map.put(map, key, transform.(value))
-
-  defp app_url(path) do
-    base =
-      Application.get_env(:elixir_api_core, ElixirApiCore.Email, [])
-      |> Keyword.fetch!(:app_url)
-
-    base <> path
-  end
 end

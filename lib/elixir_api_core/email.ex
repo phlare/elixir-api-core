@@ -5,16 +5,15 @@ defmodule ElixirApiCore.Email do
   Each public builder takes a `User` plus a signed token and returns a
   `Swoosh.Email` struct ready to ship via `ElixirApiCore.Mailer.deliver/1`.
 
-  The verification link targets the API endpoint (`Endpoint.url()`) because the
-  handler lives on the API and redirects to `APP_URL` on completion. The
-  password-reset link targets `APP_URL` because the frontend collects the new
-  password and POSTs it back to the API.
+  Both links target the frontend (`APP_URL`) to avoid the link-prefetch /
+  mailbox-scanner problem that a mutating GET on the API would have. The
+  frontend pages (`/verify-email` and `/reset-password`) collect the token
+  and POST it back to the API.
   """
 
   import Swoosh.Email
 
   alias ElixirApiCore.Accounts.User
-  alias ElixirApiCoreWeb.Endpoint
 
   @doc """
   Dispatches to a named email builder. Used by `SendEmailWorker` to rebuild a
@@ -29,7 +28,7 @@ defmodule ElixirApiCore.Email do
   end
 
   def verification_email(%User{} = user, token) when is_binary(token) do
-    url = Endpoint.url() <> "/api/v1/auth/verify_email?token=" <> URI.encode_www_form(token)
+    url = app_url() <> "/verify-email?token=" <> URI.encode_www_form(token)
 
     new()
     |> to({user.display_name || user.email, user.email})

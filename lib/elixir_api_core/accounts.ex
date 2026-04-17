@@ -170,17 +170,27 @@ defmodule ElixirApiCore.Accounts do
 
   def soft_delete_user(%User{} = user) do
     Repo.transaction(fn ->
+      # Use a single timestamp for both the user and any co-deleted accounts
+      # so `restore_user/1` can identify the set by exact timestamp match and
+      # leave previously-deleted accounts alone.
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
       {:ok, updated_user} =
         user
-        |> User.soft_delete_changeset()
+        |> Ecto.Changeset.change(deleted_at: now)
         |> Repo.update()
 
       sole_accounts = accounts_solely_owned_by(user.id)
 
       Enum.each(sole_accounts, fn account ->
-        account
-        |> Account.soft_delete_changeset()
-        |> Repo.update!()
+        # Preserve the original deletion timestamp on accounts deleted earlier
+        # — overwriting would make them indistinguishable from co-deleted ones
+        # and cause restore_user to resurrect them.
+        if is_nil(account.deleted_at) do
+          account
+          |> Ecto.Changeset.change(deleted_at: now)
+          |> Repo.update!()
+        end
       end)
 
       Tokens.revoke_all_active_refresh_tokens(user.id)
@@ -198,16 +208,22 @@ defmodule ElixirApiCore.Accounts do
 
   def restore_user(%User{} = user) do
     Repo.transaction(fn ->
+      user_deleted_at = user.deleted_at
+
       {:ok, restored_user} =
         user
         |> User.restore_changeset()
         |> Repo.update()
 
-      # Restore accounts that were soft-deleted within 1 second of the user
+      # Only restore accounts co-deleted with the user — identified by an
+      # exact `deleted_at` timestamp match. Accounts deleted earlier (e.g., by
+      # an admin for a separate reason) retain their original timestamp and
+      # stay deleted.
       sole_accounts = accounts_solely_owned_by(user.id)
 
       Enum.each(sole_accounts, fn account ->
-        if not is_nil(account.deleted_at) do
+        if not is_nil(account.deleted_at) and
+             DateTime.compare(account.deleted_at, user_deleted_at) == :eq do
           account
           |> Account.restore_changeset()
           |> Repo.update!()

@@ -17,11 +17,8 @@ defmodule ElixirApiCore.EmailTest do
       assert email.to == [{"Jane Doe", user.email}]
       assert email.text_body =~ "Hi Jane Doe"
 
-      expected_base = ElixirApiCoreWeb.Endpoint.url()
-
       assert email.text_body =~
-               expected_base <>
-                 "/api/v1/auth/verify_email?token=verification-token-123"
+               "http://app.test.local/verify-email?token=verification-token-123"
     end
 
     test "URL-encodes tokens with special characters" do

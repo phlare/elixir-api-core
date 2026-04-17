@@ -169,6 +169,34 @@ defmodule ElixirApiCore.AccountsSoftDeleteTest do
       user = user_fixture()
       assert {:error, :user_not_deleted} = Accounts.restore_user(user)
     end
+
+    test "does not resurrect an account deleted before the user was deleted" do
+      user = user_fixture()
+      account = account_fixture()
+      membership_fixture(%{user: user, account: account, role: :owner})
+
+      # Admin soft-deletes the account for an independent reason, earlier.
+      earlier =
+        DateTime.utc_now() |> DateTime.add(-7 * 86_400, :second) |> DateTime.truncate(:second)
+
+      {1, _} =
+        Repo.update_all(
+          from(a in Account, where: a.id == ^account.id),
+          set: [deleted_at: earlier]
+        )
+
+      # Later, the user is soft-deleted. The account is already deleted and
+      # should retain its original timestamp (not be co-deleted with the user).
+      {:ok, deleted_user} = Accounts.soft_delete_user(user)
+      stored_account = Repo.get(Account, account.id)
+      assert DateTime.compare(stored_account.deleted_at, earlier) == :eq
+
+      # Restoring the user must leave the earlier-deleted account alone.
+      {:ok, _restored_user} = Accounts.restore_user(deleted_user)
+      final_account = Repo.get(Account, account.id)
+      refute is_nil(final_account.deleted_at)
+      assert DateTime.compare(final_account.deleted_at, earlier) == :eq
+    end
   end
 
   describe "purge_user!/1" do

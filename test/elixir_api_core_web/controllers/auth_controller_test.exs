@@ -186,26 +186,35 @@ defmodule ElixirApiCoreWeb.AuthControllerTest do
     end
   end
 
-  describe "GET /api/v1/auth/verify_email (magic link)" do
-    test "redirects to APP_URL success URL for a valid token", %{conn: conn} do
+  describe "POST /api/v1/auth/verify_email" do
+    test "returns ok for a valid token", %{conn: conn} do
       user = user_fixture()
       token = ElixirApiCore.Auth.EmailToken.sign_verification(user.id)
 
-      conn = get(conn, "/api/v1/auth/verify_email", %{token: token})
+      conn = post(conn, "/api/v1/auth/verify_email", %{token: token})
 
-      assert redirected_to(conn) == "http://app.test.local/?email_verified=1"
+      assert json_response(conn, 200)["data"]["status"] == "ok"
     end
 
-    test "redirects to APP_URL error URL for an invalid token", %{conn: conn} do
-      conn = get(conn, "/api/v1/auth/verify_email", %{token: "garbage"})
+    test "is idempotent — re-verifying a verified user returns ok", %{conn: conn} do
+      user = user_fixture()
+      token = ElixirApiCore.Auth.EmailToken.sign_verification(user.id)
 
-      assert redirected_to(conn) == "http://app.test.local/?error=invalid_token"
+      conn1 = post(conn, "/api/v1/auth/verify_email", %{token: token})
+      assert json_response(conn1, 200)["data"]["status"] == "ok"
+
+      conn2 = post(build_conn(), "/api/v1/auth/verify_email", %{token: token})
+      assert json_response(conn2, 200)["data"]["status"] == "ok"
     end
 
-    test "redirects to error URL when token is missing", %{conn: conn} do
-      conn = get(conn, "/api/v1/auth/verify_email")
+    test "returns 400 for an invalid token", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/verify_email", %{token: "garbage"})
+      assert json_response(conn, 400)["error"]["code"] == "invalid_email_token"
+    end
 
-      assert redirected_to(conn) == "http://app.test.local/?error=invalid_token"
+    test "returns 400 when token is missing", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/verify_email", %{})
+      assert json_response(conn, 400)["error"]["code"] == "invalid_email_token"
     end
   end
 
