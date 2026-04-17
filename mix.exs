@@ -51,6 +51,7 @@ defmodule ElixirApiCore.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
       {:req, "~> 0.5"},
       {:oban, "~> 2.19"},
+      {:swoosh, "~> 1.17"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:cors_plug, "~> 3.0"},

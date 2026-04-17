@@ -53,6 +53,28 @@ defmodule ElixirApiCoreWeb.ConnCase do
     Plug.Conn.put_req_header(conn, "authorization", "Bearer #{token}")
   end
 
+  @doc """
+  Adds a valid bearer token for a system admin user.
+  Returns {conn, user} so tests can reference the admin user.
+  """
+  def conn_with_admin_token(conn) do
+    admin = AccountsFixtures.system_admin_fixture()
+    account = AccountsFixtures.account_fixture()
+
+    membership =
+      AccountsFixtures.membership_fixture(%{
+        user: admin,
+        account: account,
+        role: :owner
+      })
+
+    {:ok, token, _claims} =
+      Tokens.issue_access_token(admin.id, membership.account_id, membership.role)
+
+    conn = Plug.Conn.put_req_header(conn, "authorization", "Bearer #{token}")
+    {conn, admin}
+  end
+
   defp build_membership do
     user = AccountsFixtures.user_fixture()
     account = AccountsFixtures.account_fixture()

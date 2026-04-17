@@ -73,6 +73,39 @@ if config_env() == :prod do
     jwt_secret: jwt_secret,
     refresh_token_pepper: refresh_token_pepper
 
+  app_url =
+    System.get_env("APP_URL") ||
+      raise """
+      environment variable APP_URL is missing.
+      This is the base URL for user-facing links in transactional emails
+      (e.g., https://app.example.com).
+      """
+
+  from_email =
+    System.get_env("FROM_EMAIL") ||
+      raise """
+      environment variable FROM_EMAIL is missing.
+      This is the From address on outbound transactional emails
+      (e.g., noreply@example.com).
+      """
+
+  config :elixir_api_core, ElixirApiCore.Email,
+    from_email: from_email,
+    app_url: app_url
+
+  # Production email delivery — uncomment and configure a Swoosh adapter
+  # for your chosen provider, e.g.:
+  #
+  #     config :elixir_api_core, ElixirApiCore.Mailer,
+  #       adapter: Swoosh.Adapters.Sendgrid,
+  #       api_key: System.fetch_env!("SENDGRID_API_KEY")
+  #
+  # See https://hexdocs.pm/swoosh/Swoosh.html#module-adapters for the full list.
+  # Don't forget to add your provider dep to mix.exs (e.g., {:swoosh_sendgrid, "~> 1.0"})
+  # and re-enable the Swoosh API client if your adapter needs one:
+  #
+  #     config :swoosh, :api_client, Swoosh.ApiClient.Finch
+
   cors_origins =
     case System.get_env("CORS_ALLOWED_ORIGINS") do
       nil -> []

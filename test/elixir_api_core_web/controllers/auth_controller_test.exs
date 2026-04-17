@@ -185,4 +185,155 @@ defmodule ElixirApiCoreWeb.AuthControllerTest do
       assert json_response(conn, 401)["error"]["code"] == "unauthorized"
     end
   end
+
+  describe "POST /api/v1/auth/verify_email" do
+    test "returns ok for a valid token", %{conn: conn} do
+      user = user_fixture()
+      token = ElixirApiCore.Auth.EmailToken.sign_verification(user.id)
+
+      conn = post(conn, "/api/v1/auth/verify_email", %{token: token})
+
+      assert json_response(conn, 200)["data"]["status"] == "ok"
+    end
+
+    test "is idempotent — re-verifying a verified user returns ok", %{conn: conn} do
+      user = user_fixture()
+      token = ElixirApiCore.Auth.EmailToken.sign_verification(user.id)
+
+      conn1 = post(conn, "/api/v1/auth/verify_email", %{token: token})
+      assert json_response(conn1, 200)["data"]["status"] == "ok"
+
+      conn2 = post(build_conn(), "/api/v1/auth/verify_email", %{token: token})
+      assert json_response(conn2, 200)["data"]["status"] == "ok"
+    end
+
+    test "returns 400 for an invalid token", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/verify_email", %{token: "garbage"})
+      assert json_response(conn, 400)["error"]["code"] == "invalid_email_token"
+    end
+
+    test "returns 400 when token is missing", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/verify_email", %{})
+      assert json_response(conn, 400)["error"]["code"] == "invalid_email_token"
+    end
+  end
+
+  describe "POST /api/v1/auth/send_verification (authenticated)" do
+    setup %{conn: conn} do
+      resp =
+        conn
+        |> post("/api/v1/auth/register", %{
+          email: "send-verif-#{System.unique_integer([:positive])}@example.com",
+          password: "password123!"
+        })
+        |> json_response(201)
+
+      authed_conn =
+        put_req_header(conn, "authorization", "Bearer #{resp["data"]["access_token"]}")
+
+      %{authed_conn: authed_conn}
+    end
+
+    test "returns ok and triggers a verification email", %{authed_conn: conn} do
+      conn = post(conn, "/api/v1/auth/send_verification", %{})
+      assert json_response(conn, 200)["data"]["status"] == "ok"
+    end
+
+    test "returns 401 without auth header", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/send_verification", %{})
+      assert json_response(conn, 401)["error"]["code"] == "unauthorized"
+    end
+  end
+
+  describe "POST /api/v1/auth/request_password_reset" do
+    test "returns ok for an existing email", %{conn: conn} do
+      email = "pwreset-#{System.unique_integer([:positive])}@example.com"
+
+      post(conn, "/api/v1/auth/register", %{email: email, password: "password123!"})
+
+      conn = post(conn, "/api/v1/auth/request_password_reset", %{email: email})
+      assert json_response(conn, 200)["data"]["status"] == "ok"
+    end
+
+    test "returns ok for a non-existent email (no enumeration)", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/request_password_reset", %{email: "nobody@example.com"})
+      assert json_response(conn, 200)["data"]["status"] == "ok"
+    end
+
+    test "returns ok for a missing email param", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/request_password_reset", %{})
+      assert json_response(conn, 200)["data"]["status"] == "ok"
+    end
+
+    test "counts whitespace/case variants against the same rate-limit bucket", %{conn: conn} do
+      email = "rate-#{System.unique_integer([:positive])}@example.com"
+      # limit is 3 per 300s; send 3 semantically identical requests to exhaust the bucket
+      for variant <- [email, "  #{email}", String.upcase(email)] do
+        post(conn, "/api/v1/auth/request_password_reset", %{email: variant})
+      end
+
+      # 4th identical request — should be rate-limited
+      conn = post(conn, "/api/v1/auth/request_password_reset", %{email: email})
+      assert json_response(conn, 429)["error"]["code"] == "rate_limited"
+    end
+  end
+
+  describe "POST /api/v1/auth/reset_password" do
+    setup %{conn: conn} do
+      email = "reset-ctrl-#{System.unique_integer([:positive])}@example.com"
+
+      resp =
+        conn
+        |> post("/api/v1/auth/register", %{email: email, password: "original123!"})
+        |> json_response(201)
+
+      user_id = resp["data"]["user"]["id"]
+
+      identity =
+        ElixirApiCore.Repo.get_by!(ElixirApiCore.Auth.Identity,
+          user_id: user_id,
+          provider: :password
+        )
+
+      fingerprint = String.slice(identity.password_hash, 0, 32)
+      token = ElixirApiCore.Auth.EmailToken.sign_password_reset(user_id, fingerprint)
+
+      %{email: email, token: token, user_id: user_id}
+    end
+
+    test "updates password and allows login with the new credential", %{
+      conn: conn,
+      email: email,
+      token: token
+    } do
+      conn =
+        post(conn, "/api/v1/auth/reset_password", %{token: token, password: "newpassword456!"})
+
+      assert json_response(conn, 200)["data"]["status"] == "ok"
+
+      conn =
+        build_conn()
+        |> post("/api/v1/auth/login", %{email: email, password: "newpassword456!"})
+
+      assert json_response(conn, 200)["data"]["access_token"]
+    end
+
+    test "returns 400 for a tampered token", %{conn: conn} do
+      conn =
+        post(conn, "/api/v1/auth/reset_password", %{token: "bogus", password: "newpassword456!"})
+
+      assert json_response(conn, 400)["error"]["code"] == "invalid_email_token"
+    end
+
+    test "returns 422 when the new password is too short", %{conn: conn, token: token} do
+      conn = post(conn, "/api/v1/auth/reset_password", %{token: token, password: "short"})
+
+      assert json_response(conn, 422)["error"]["code"] == "password_too_short"
+    end
+
+    test "returns 400 when the token is missing", %{conn: conn} do
+      conn = post(conn, "/api/v1/auth/reset_password", %{password: "newpassword456!"})
+      assert json_response(conn, 400)["error"]["code"] == "invalid_email_token"
+    end
+  end
 end

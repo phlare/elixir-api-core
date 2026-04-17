@@ -23,6 +23,15 @@ config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
 # Use Oban testing mode
 config :elixir_api_core, Oban, testing: :inline
 
+# Swoosh test adapter — emails are captured, not sent. Use
+# Swoosh.TestAssertions.assert_email_sent/1 in tests.
+config :elixir_api_core, ElixirApiCore.Mailer, adapter: Swoosh.Adapters.Test
+
+# Deterministic APP_URL/from-email for assertions
+config :elixir_api_core, ElixirApiCore.Email,
+  from_email: "noreply@test.local",
+  app_url: "http://app.test.local"
+
 # Use mock OAuth provider in tests
 config :elixir_api_core, :oauth_provider, ElixirApiCore.Auth.MockOAuthProvider
 

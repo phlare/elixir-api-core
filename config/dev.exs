@@ -52,6 +52,9 @@ config :elixir_api_core, ElixirApiCoreWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :elixir_api_core, dev_routes: true
 
+# Swoosh mailbox preview — http://localhost:4001
+config :swoosh, serve_mailbox: true, preview_port: 4001
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 

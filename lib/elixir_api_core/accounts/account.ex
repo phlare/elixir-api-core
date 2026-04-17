@@ -9,11 +9,20 @@ defmodule ElixirApiCore.Accounts.Account do
 
   schema "accounts" do
     field :name, :string
+    field :deleted_at, :utc_datetime
 
     has_many :memberships, Membership
     has_many :users, through: [:memberships, :user]
 
     timestamps(type: :utc_datetime)
+  end
+
+  def soft_delete_changeset(account) do
+    change(account, deleted_at: DateTime.utc_now() |> DateTime.truncate(:second))
+  end
+
+  def restore_changeset(account) do
+    change(account, deleted_at: nil)
   end
 
   def changeset(account, attrs) do
