@@ -174,4 +174,38 @@ defmodule ElixirApiCoreWeb.FallbackController do
       message: "Use DELETE /api/v1/me to delete your own account"
     )
   end
+
+  def call(conn, {:error, :invalid_email_token}) do
+    conn
+    |> put_status(:bad_request)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json", code: "invalid_email_token", message: "Invalid email token")
+  end
+
+  def call(conn, {:error, :expired_email_token}) do
+    conn
+    |> put_status(:bad_request)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json", code: "expired_email_token", message: "Email token has expired")
+  end
+
+  def call(conn, {:error, :email_already_verified}) do
+    conn
+    |> put_status(:conflict)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "email_already_verified",
+      message: "Email is already verified"
+    )
+  end
+
+  def call(conn, {:error, :no_password_identity}) do
+    conn
+    |> put_status(:unprocessable_entity)
+    |> put_view(json: ElixirApiCoreWeb.ErrorJSON)
+    |> render("error.json",
+      code: "no_password_identity",
+      message: "No password is set for this account"
+    )
+  end
 end

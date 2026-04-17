@@ -9,6 +9,26 @@ defmodule ElixirApiCore.Auth.RateLimits do
     do_check(:refresh, identifier, :refresh_limit, :refresh_window_seconds, opts)
   end
 
+  def check_send_verification(identifier, opts \\ []) do
+    do_check(
+      :send_verification,
+      identifier,
+      :send_verification_limit,
+      :send_verification_window_seconds,
+      opts
+    )
+  end
+
+  def check_password_reset(identifier, opts \\ []) do
+    do_check(
+      :password_reset,
+      identifier,
+      :password_reset_limit,
+      :password_reset_window_seconds,
+      opts
+    )
+  end
+
   defp do_check(bucket, identifier, limit_key, window_key, opts) do
     limit = config(limit_key)
     window_seconds = config(window_key)

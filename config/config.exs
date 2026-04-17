@@ -18,7 +18,9 @@ config :elixir_api_core, ElixirApiCore.Auth.Tokens,
   jwt_secret: "dev_jwt_secret_change_me",
   access_token_ttl_seconds: 900,
   refresh_token_ttl_seconds: 604_800,
-  refresh_token_pepper: "dev_refresh_pepper_change_me"
+  refresh_token_pepper: "dev_refresh_pepper_change_me",
+  email_verification_ttl_seconds: 86_400,
+  password_reset_ttl_seconds: 3_600
 
 config :elixir_api_core, ElixirApiCore.Auth.Cookie,
   enabled: true,
@@ -33,11 +35,15 @@ config :elixir_api_core, ElixirApiCore.Auth.RateLimits,
   login_limit: 5,
   login_window_seconds: 60,
   refresh_limit: 10,
-  refresh_window_seconds: 60
+  refresh_window_seconds: 60,
+  send_verification_limit: 3,
+  send_verification_window_seconds: 300,
+  password_reset_limit: 3,
+  password_reset_window_seconds: 300
 
 config :elixir_api_core, Oban,
   repo: ElixirApiCore.Repo,
-  queues: [default: 10, maintenance: 5],
+  queues: [default: 10, maintenance: 5, email: 5],
   plugins: [
     {Oban.Plugins.Cron,
      crontab: [
@@ -45,6 +51,17 @@ config :elixir_api_core, Oban,
        {"0 4 * * *", ElixirApiCore.Workers.CleanupDeletedUsersWorker}
      ]}
   ]
+
+# Email (Swoosh) — provider-agnostic. Dev uses Local adapter (Swoosh mailbox
+# viewer at http://localhost:4001); test uses the Test adapter. Downstream
+# projects add their own production adapter dep and config in runtime.exs.
+config :elixir_api_core, ElixirApiCore.Mailer, adapter: Swoosh.Adapters.Local
+
+config :elixir_api_core, ElixirApiCore.Email,
+  from_email: "noreply@example.com",
+  app_url: "http://localhost:5173"
+
+config :swoosh, :api_client, false
 
 # CORS — restrictive default; override in runtime.exs for prod
 config :cors_plug,

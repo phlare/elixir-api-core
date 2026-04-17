@@ -14,6 +14,7 @@ defmodule ElixirApiCore.Accounts.User do
     field :display_name, :string
     field :is_system_admin, :boolean, default: false
     field :deleted_at, :utc_datetime
+    field :email_verified_at, :utc_datetime
 
     has_many :memberships, Membership
     has_many :accounts, through: [:memberships, :account]
@@ -42,6 +43,10 @@ defmodule ElixirApiCore.Accounts.User do
 
   def restore_changeset(user) do
     change(user, deleted_at: nil)
+  end
+
+  def verify_email_changeset(user) do
+    change(user, email_verified_at: DateTime.utc_now() |> DateTime.truncate(:second))
   end
 
   defp normalize_email(changeset) do

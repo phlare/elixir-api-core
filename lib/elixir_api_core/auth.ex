@@ -1,14 +1,18 @@
 defmodule ElixirApiCore.Auth do
   import Ecto.Query, warn: false
 
+  require Logger
+
   alias ElixirApiCore.Accounts
   alias ElixirApiCore.Accounts.Membership
   alias ElixirApiCore.Accounts.User
   alias ElixirApiCore.Audit
+  alias ElixirApiCore.Auth.EmailToken
   alias ElixirApiCore.Auth.Identity
   alias ElixirApiCore.Auth.Password
   alias ElixirApiCore.Auth.Tokens
   alias ElixirApiCore.Repo
+  alias ElixirApiCore.Workers.SendEmailWorker
 
   @min_password_length 8
   @max_password_length 128
@@ -71,6 +75,209 @@ defmodule ElixirApiCore.Auth do
           resource_id: data.user.id
         }
       end)
+      |> enqueue_verification_on_register()
+    end
+  end
+
+  defp enqueue_verification_on_register({:ok, %{user: user}} = result) do
+    case enqueue_verification_email(user) do
+      {:ok, _job} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to enqueue verification email for #{user.id}: #{inspect(reason)}")
+    end
+
+    result
+  end
+
+  defp enqueue_verification_on_register(other), do: other
+
+  defp enqueue_verification_email(%User{id: user_id}) do
+    token = EmailToken.sign_verification(user_id)
+
+    %{"template" => "verification_email", "user_id" => user_id, "args" => %{"token" => token}}
+    |> SendEmailWorker.new()
+    |> Oban.insert()
+  end
+
+  defp enqueue_password_reset_email(%User{id: user_id}, %Identity{} = identity) do
+    token = EmailToken.sign_password_reset(user_id, password_hash_fingerprint(identity))
+
+    %{"template" => "password_reset_email", "user_id" => user_id, "args" => %{"token" => token}}
+    |> SendEmailWorker.new()
+    |> Oban.insert()
+  end
+
+  defp password_hash_fingerprint(%Identity{password_hash: hash}) when is_binary(hash),
+    do: String.slice(hash, 0, 32)
+
+  @doc """
+  Enqueues a verification email for the given user.
+
+  Returns `{:ok, job}` on successful enqueue. Safe to call repeatedly — each call
+  enqueues a fresh signed token with a 24-hour TTL.
+  """
+  def send_verification_email(%User{email_verified_at: verified_at})
+      when not is_nil(verified_at) do
+    {:error, :email_already_verified}
+  end
+
+  def send_verification_email(%User{} = user) do
+    case enqueue_verification_email(user) do
+      {:ok, _job} ->
+        {:ok, :enqueued}
+        |> with_audit(fn _ ->
+          %{
+            action: "user.verification_email_sent",
+            actor_id: user.id,
+            resource_type: "user",
+            resource_id: user.id
+          }
+        end)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Verifies an email-verification token and marks the user's email as verified.
+
+  Returns `{:ok, user}` on success, `{:error, :email_already_verified}` if the
+  user was already verified, or `{:error, :invalid_email_token | :expired_email_token}`
+  for token failures.
+  """
+  def verify_email(token) when is_binary(token) do
+    with {:ok, user_id} <- EmailToken.verify_verification(token),
+         {:ok, user} <- fetch_active_user(user_id),
+         :ok <- ensure_not_verified(user),
+         {:ok, verified_user} <-
+           user |> User.verify_email_changeset() |> Repo.update() do
+      {:ok, verified_user}
+      |> with_audit(fn _ ->
+        %{
+          action: "user.email_verified",
+          actor_id: verified_user.id,
+          resource_type: "user",
+          resource_id: verified_user.id
+        }
+      end)
+    end
+  end
+
+  def verify_email(_), do: {:error, :invalid_email_token}
+
+  @doc """
+  Requests a password reset email for the given address.
+
+  Always returns `{:ok, :enqueued}` regardless of whether an account exists for
+  the email — this prevents account enumeration via the reset flow. If a user
+  does exist and has a password identity, a reset email is enqueued.
+  """
+  def request_password_reset(email) when is_binary(email) do
+    normalized = email |> String.trim() |> String.downcase()
+
+    case Repo.get_by(User, email: normalized) do
+      nil ->
+        :ok
+
+      %{deleted_at: d} when not is_nil(d) ->
+        :ok
+
+      %User{} = user ->
+        case Repo.get_by(Identity, user_id: user.id, provider: :password) do
+          nil ->
+            :ok
+
+          %Identity{} = identity ->
+            case enqueue_password_reset_email(user, identity) do
+              {:ok, _job} ->
+                Audit.log(%{
+                  action: "user.password_reset_requested",
+                  actor_id: user.id,
+                  resource_type: "user",
+                  resource_id: user.id
+                })
+
+              {:error, reason} ->
+                Logger.error(
+                  "Failed to enqueue password reset for #{user.id}: #{inspect(reason)}"
+                )
+            end
+        end
+    end
+
+    {:ok, :enqueued}
+  end
+
+  def request_password_reset(_), do: {:ok, :enqueued}
+
+  @doc """
+  Resets the password for a user identified by a signed reset token.
+
+  Updates the user's `:password` identity. Returns `{:error, :no_password_identity}`
+  if the user signed up via OAuth and has no password to reset.
+  """
+  def reset_password(token, new_password) when is_binary(token) and is_binary(new_password) do
+    with :ok <- validate_password(new_password),
+         {:ok, %{user_id: user_id, fingerprint: token_fingerprint}} <-
+           EmailToken.verify_password_reset(token),
+         {:ok, user} <- fetch_active_user(user_id),
+         {:ok, identity} <- fetch_password_identity(user),
+         :ok <- verify_password_fingerprint(identity, token_fingerprint),
+         password_hash = Password.hash_password(new_password),
+         {:ok, _updated} <-
+           identity
+           |> Identity.changeset(%{password_hash: password_hash})
+           |> Repo.update() do
+      Tokens.revoke_all_active_refresh_tokens(user.id)
+
+      {:ok, user}
+      |> with_audit(fn _ ->
+        %{
+          action: "user.password_reset",
+          actor_id: user.id,
+          resource_type: "user",
+          resource_id: user.id
+        }
+      end)
+    end
+  end
+
+  def reset_password(_, _), do: {:error, :invalid_email_token}
+
+  defp fetch_active_user(user_id) do
+    case Repo.get(User, user_id) do
+      nil -> {:error, :invalid_email_token}
+      %{deleted_at: d} when not is_nil(d) -> {:error, :invalid_email_token}
+      user -> {:ok, user}
+    end
+  end
+
+  defp ensure_not_verified(%User{email_verified_at: nil}), do: :ok
+  defp ensure_not_verified(%User{}), do: {:error, :email_already_verified}
+
+  defp fetch_password_identity(%User{} = user) do
+    case Repo.get_by(Identity, user_id: user.id, provider: :password) do
+      nil -> {:error, :no_password_identity}
+      identity -> {:ok, identity}
+    end
+  end
+
+  defp verify_password_fingerprint(%Identity{} = identity, token_fingerprint) do
+    if password_hash_fingerprint(identity) == token_fingerprint do
+      :ok
+    else
+      {:error, :invalid_email_token}
+    end
+  end
+
+  defp validate_password(password) do
+    cond do
+      String.length(password) < @min_password_length -> {:error, :password_too_short}
+      String.length(password) > @max_password_length -> {:error, :password_too_long}
+      true -> :ok
     end
   end
 

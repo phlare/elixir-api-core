@@ -1,7 +1,11 @@
 defmodule ElixirApiCore.AuthTest do
   use ElixirApiCore.DataCase, async: true
 
+  import ElixirApiCore.AccountsFixtures
+  import Swoosh.TestAssertions
+
   alias ElixirApiCore.Auth
+  alias ElixirApiCore.Auth.EmailToken
   alias ElixirApiCore.Auth.Tokens
 
   describe "register/1" do
@@ -302,6 +306,171 @@ defmodule ElixirApiCore.AuthTest do
       # The login_via_identity path should reject the deleted user
       assert {:error, :invalid_credentials} =
                Auth.google_callback(%{code: "valid_code"})
+    end
+  end
+
+  describe "register/1 email verification hook" do
+    test "enqueues and delivers a verification email after successful registration" do
+      params = %{
+        email: "verify-me-#{System.unique_integer([:positive])}@example.com",
+        password: "password123!"
+      }
+
+      assert {:ok, _result} = Auth.register(params)
+      # Oban testing: :inline runs jobs synchronously, so the email is sent immediately
+      assert_email_sent(subject: "Verify your email address", to: [{params.email, params.email}])
+    end
+  end
+
+  describe "send_verification_email/1" do
+    test "enqueues a verification email for an unverified user" do
+      user = user_fixture()
+
+      assert {:ok, :enqueued} = Auth.send_verification_email(user)
+      assert_email_sent(subject: "Verify your email address")
+    end
+
+    test "refuses to send to an already-verified user" do
+      user = user_fixture()
+
+      {:ok, verified} =
+        user |> ElixirApiCore.Accounts.User.verify_email_changeset() |> Repo.update()
+
+      assert {:error, :email_already_verified} = Auth.send_verification_email(verified)
+    end
+  end
+
+  describe "verify_email/1" do
+    test "sets email_verified_at when given a valid token" do
+      user = user_fixture()
+      token = EmailToken.sign_verification(user.id)
+
+      assert {:ok, verified} = Auth.verify_email(token)
+      assert %DateTime{} = verified.email_verified_at
+    end
+
+    test "is idempotent on the second call (returns :email_already_verified)" do
+      user = user_fixture()
+      token = EmailToken.sign_verification(user.id)
+
+      assert {:ok, _} = Auth.verify_email(token)
+      assert {:error, :email_already_verified} = Auth.verify_email(token)
+    end
+
+    test "rejects an invalid token" do
+      assert {:error, :invalid_email_token} = Auth.verify_email("not-a-real-token")
+    end
+
+    test "rejects a reset token used as a verification token" do
+      user_id = Ecto.UUID.generate()
+      reset_token = EmailToken.sign_password_reset(user_id, "fp")
+
+      assert {:error, :invalid_email_token} = Auth.verify_email(reset_token)
+    end
+  end
+
+  describe "request_password_reset/1" do
+    test "enqueues a reset email when the user exists with a password identity" do
+      {:ok, result} =
+        Auth.register(%{
+          email: "reset-me-#{System.unique_integer([:positive])}@example.com",
+          password: "original123!"
+        })
+
+      # consume the verification email that registration enqueues
+      assert_email_sent(subject: "Verify your email address")
+
+      assert {:ok, :enqueued} = Auth.request_password_reset(result.user.email)
+      assert_email_sent(subject: "Reset your password")
+    end
+
+    test "is :ok for a non-existent email (no enumeration)" do
+      assert {:ok, :enqueued} = Auth.request_password_reset("nobody@example.com")
+      assert_no_email_sent()
+    end
+
+    test "does not enqueue for a user without a password identity (Google-only)" do
+      user = user_fixture()
+      # no password identity created
+
+      assert {:ok, :enqueued} = Auth.request_password_reset(user.email)
+      assert_no_email_sent()
+    end
+  end
+
+  describe "reset_password/2" do
+    setup do
+      {:ok, result} =
+        Auth.register(%{
+          email: "pwd-reset-#{System.unique_integer([:positive])}@example.com",
+          password: "original123!"
+        })
+
+      # drain the verification email from the test mailbox
+      assert_email_sent(subject: "Verify your email address")
+
+      identity =
+        Repo.get_by!(ElixirApiCore.Auth.Identity, user_id: result.user.id, provider: :password)
+
+      %{user: result.user, identity: identity}
+    end
+
+    test "updates the password identity when the token is valid", %{
+      user: user,
+      identity: identity
+    } do
+      fingerprint = String.slice(identity.password_hash, 0, 32)
+      token = EmailToken.sign_password_reset(user.id, fingerprint)
+
+      assert {:ok, _user} = Auth.reset_password(token, "newpassword456!")
+
+      assert {:ok, _result} =
+               Auth.login(%{email: user.email, password: "newpassword456!"})
+
+      assert {:error, :invalid_credentials} =
+               Auth.login(%{email: user.email, password: "original123!"})
+    end
+
+    test "rejects a replayed token after the password was reset once", %{
+      user: user,
+      identity: identity
+    } do
+      fingerprint = String.slice(identity.password_hash, 0, 32)
+      token = EmailToken.sign_password_reset(user.id, fingerprint)
+
+      assert {:ok, _user} = Auth.reset_password(token, "newpassword456!")
+
+      assert {:error, :invalid_email_token} =
+               Auth.reset_password(token, "anotherpassword789!")
+    end
+
+    test "rejects a token signed against an older password hash", %{user: user} do
+      # Simulates signing with a stale fingerprint (e.g., password was rotated
+      # between email send and click).
+      token = EmailToken.sign_password_reset(user.id, "stale-fingerprint-xxxxxxxxxxxxxxx")
+
+      assert {:error, :invalid_email_token} =
+               Auth.reset_password(token, "newpassword456!")
+    end
+
+    test "rejects a tampered token" do
+      assert {:error, :invalid_email_token} =
+               Auth.reset_password("bogus", "newpassword456!")
+    end
+
+    test "returns :no_password_identity when the user has no password" do
+      user = user_fixture()
+      token = EmailToken.sign_password_reset(user.id, "any-fingerprint")
+
+      assert {:error, :no_password_identity} =
+               Auth.reset_password(token, "newpassword456!")
+    end
+
+    test "validates the new password length", %{user: user, identity: identity} do
+      fingerprint = String.slice(identity.password_hash, 0, 32)
+      token = EmailToken.sign_password_reset(user.id, fingerprint)
+
+      assert {:error, :password_too_short} = Auth.reset_password(token, "short")
     end
   end
 end

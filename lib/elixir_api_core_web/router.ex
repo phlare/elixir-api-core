@@ -37,6 +37,9 @@ defmodule ElixirApiCoreWeb.Router do
     post "/auth/logout", AuthController, :logout
     get "/auth/google/start", AuthController, :google_start
     get "/auth/google/callback", AuthController, :google_callback
+    get "/auth/verify_email", AuthController, :verify_email
+    post "/auth/request_password_reset", AuthController, :request_password_reset
+    post "/auth/reset_password", AuthController, :reset_password
   end
 
   # Authenticated endpoints
@@ -44,6 +47,7 @@ defmodule ElixirApiCoreWeb.Router do
     pipe_through [:api, :auth_security, :authenticated]
 
     post "/auth/switch_account", AuthController, :switch_account
+    post "/auth/send_verification", AuthController, :send_verification
     get "/me", UserController, :me
     delete "/me", UserController, :delete_me
   end

@@ -126,6 +126,57 @@ defmodule ElixirApiCoreWeb.AuthController do
     end
   end
 
+  def verify_email(conn, %{"token" => token}) when is_binary(token) do
+    case Auth.verify_email(token) do
+      {:ok, _user} ->
+        redirect(conn, external: app_url("/?email_verified=1"))
+
+      {:error, :email_already_verified} ->
+        redirect(conn, external: app_url("/?email_verified=1"))
+
+      {:error, _reason} ->
+        redirect(conn, external: app_url("/?error=invalid_token"))
+    end
+  end
+
+  def verify_email(conn, _params) do
+    redirect(conn, external: app_url("/?error=invalid_token"))
+  end
+
+  def send_verification(conn, _params) do
+    user = conn.assigns.current_user
+
+    with {:ok, _remaining} <-
+           RateLimits.check_send_verification(user.id <> ":" <> client_ip(conn)),
+         {:ok, _} <- Auth.send_verification_email(user) do
+      json(conn, %{data: %{status: "ok"}})
+    end
+  end
+
+  def request_password_reset(conn, %{"email" => email}) when is_binary(email) do
+    bucket_key = email |> String.trim() |> String.downcase() |> Kernel.<>(":#{client_ip(conn)}")
+
+    with {:ok, _remaining} <- RateLimits.check_password_reset(bucket_key),
+         {:ok, _} <- Auth.request_password_reset(email) do
+      json(conn, %{data: %{status: "ok"}})
+    end
+  end
+
+  def request_password_reset(conn, _params) do
+    json(conn, %{data: %{status: "ok"}})
+  end
+
+  def reset_password(conn, %{"token" => token, "password" => password})
+      when is_binary(token) and is_binary(password) do
+    with {:ok, _user} <- Auth.reset_password(token, password) do
+      json(conn, %{data: %{status: "ok"}})
+    end
+  end
+
+  def reset_password(_conn, _params) do
+    {:error, :invalid_email_token}
+  end
+
   # Cookie helpers
 
   defp put_refresh_cookie(conn, token) do
@@ -190,4 +241,12 @@ defmodule ElixirApiCoreWeb.AuthController do
 
   defp maybe_put(map, _key, nil, _transform), do: map
   defp maybe_put(map, key, value, transform), do: Map.put(map, key, transform.(value))
+
+  defp app_url(path) do
+    base =
+      Application.get_env(:elixir_api_core, ElixirApiCore.Email, [])
+      |> Keyword.fetch!(:app_url)
+
+    base <> path
+  end
 end
