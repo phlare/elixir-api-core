@@ -8,9 +8,10 @@ Phoenix API template for multi-tenant identity, authentication, and authorizatio
 
 ## Workflows
 
-- Commit workflow: `../.claude/instructions/commit_workflow.md`
-- Dependabot PR merging: `../.claude/instructions/dependabot_workflow.md`
-- Shared Elixir/Phoenix conventions: `../.claude/instructions/elixir_phoenix_guidelines.md`
+- Commit workflow: `.claude/instructions/commit_workflow.md`
+- Dependabot PR merging: `.claude/instructions/dependabot_workflow.md`
+- CI/CD setup: `.claude/instructions/ci_cd.md`
+- Shared Elixir/Phoenix conventions (Tiny Inbox workspace only): `../.claude/instructions/elixir_phoenix_guidelines.md`
 
 ## Commands
 

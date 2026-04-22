@@ -4,9 +4,10 @@ This is an API-only web application written using the Phoenix web framework. The
 
 - Reusable Phoenix API template for multi-tenant identity, authentication, and authorization. It contains auth and tenancy primitives, not product logic
 - Elixir 1.19.5 + OTP 28.3.3 are pinned in `.tool-versions`
-- Commit workflow: `../.claude/instructions/commit_workflow.md`
-- Dependabot PR merging: `../.claude/instructions/dependabot_workflow.md`
-- Shared Elixir/Phoenix conventions: `../.claude/instructions/elixir_phoenix_guidelines.md`
+- Commit workflow: `.claude/instructions/commit_workflow.md`
+- Dependabot PR merging: `.claude/instructions/dependabot_workflow.md`
+- CI/CD setup: `.claude/instructions/ci_cd.md`
+- Shared Elixir/Phoenix conventions (Tiny Inbox workspace only): `../.claude/instructions/elixir_phoenix_guidelines.md`
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Run Elixir commands from the `elixir-api-core/` repo root. If `mix` or `erl` is missing in the shell, initialize `asdf` first with `source /usr/local/opt/asdf/libexec/asdf.sh`
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
