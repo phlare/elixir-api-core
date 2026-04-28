@@ -10,8 +10,12 @@ Phoenix API template for multi-tenant identity, authentication, and authorizatio
 
 - Commit workflow: `.claude/instructions/commit_workflow.md`
 - Dependabot PR merging: `.claude/instructions/dependabot_workflow.md`
+- CI/CD setup: `.claude/instructions/ci_cd.md`
+- Shared Elixir/Phoenix conventions (Tiny Inbox workspace only): `../.claude/instructions/elixir_phoenix_guidelines.md`
 
 ## Commands
+
+Run commands from the `elixir-api-core/` repo root. If `mix` or `erl` is unavailable in the shell, initialize `asdf` first with `source /usr/local/opt/asdf/libexec/asdf.sh`.
 
 ```bash
 # First-time setup (installs deps + creates/migrates DB)

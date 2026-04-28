@@ -8,20 +8,37 @@ updates:
   - package-ecosystem: "mix"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     allow:
       - dependency-type: "direct"
     commit-message:
       prefix: "deps"
+      include: "scope"
     labels:
       - "dependencies"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
+    groups:
+      patches:
+        update-types:
+          - "patch"
+      minors:
+        update-types:
+          - "minor"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     commit-message:
       prefix: "ci"
+      include: "scope"
     labels:
       - "ci"
+    open-pull-requests-limit: 10
+    groups:
+      patches:
+        update-types:
+          - "patch"
+      minors:
+        update-types:
+          - "minor"
