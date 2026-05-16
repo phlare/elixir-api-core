@@ -6,12 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Phoenix API template for multi-tenant identity, authentication, and authorization. This is a reusable foundation — it contains no product logic, only auth/tenancy/identity primitives. Elixir 1.19.5 + OTP 28.3.3 (pinned in `.tool-versions`).
 
+This repository must remain usable as a standalone template. Do not assume this repo is cloned alongside other Tiny Tools repos when writing guidance or changing developer workflows.
+
 ## Workflows
 
 - Commit workflow: `.claude/instructions/commit_workflow.md`
 - Dependabot PR merging: `.claude/instructions/dependabot_workflow.md`
 - CI/CD setup: `.claude/instructions/ci_cd.md`
-- Shared Elixir/Phoenix conventions (Tiny Inbox workspace only): `../.claude/instructions/elixir_phoenix_guidelines.md`
+
+If you need a convention for working in this template, document it here or in this repo's own `.claude/` directory. Do not rely on workspace-only parent docs.
 
 ## Commands
 

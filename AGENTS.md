@@ -3,11 +3,11 @@ This is an API-only web application written using the Phoenix web framework. The
 ## Project guidelines
 
 - Reusable Phoenix API template for multi-tenant identity, authentication, and authorization. It contains auth and tenancy primitives, not product logic
+- This template must remain usable as a standalone repo. Do not rely on sibling repos, workspace-level skills, or cross-repo local documentation for required setup or usage guidance
 - Elixir 1.19.5 + OTP 28.3.3 are pinned in `.tool-versions`
 - Commit workflow: `.claude/instructions/commit_workflow.md`
 - Dependabot PR merging: `.claude/instructions/dependabot_workflow.md`
 - CI/CD setup: `.claude/instructions/ci_cd.md`
-- Shared Elixir/Phoenix conventions (Tiny Inbox workspace only): `../.claude/instructions/elixir_phoenix_guidelines.md`
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
 - Run Elixir commands from the `elixir-api-core/` repo root. If `mix` or `erl` is missing in the shell, initialize `asdf` first with `source /usr/local/opt/asdf/libexec/asdf.sh`
 - Use the already included and available `:req` (`Req`) library for HTTP requests, **avoid** `:httpoison`, `:tesla`, and `:httpc`. Req is included by default and is the preferred HTTP client for Phoenix apps
@@ -15,6 +15,7 @@ This is an API-only web application written using the Phoenix web framework. The
 - All API errors use the standard envelope: `{ "error": { "code": "...", "message": "...", "details": {} } }`
 - OAuth provider is configurable via `Application.get_env(:elixir_api_core, :oauth_provider)` — use the mock in tests
 - **Tenant safety**: use `ElixirApiCore.Repo.Scoped` helpers (`where_account/2`, `scoped_get/3`, `scoped_all/2`) for all account-scoped queries — never use raw `Repo.get` or `Repo.all` when the query should be account-scoped
+- If referencing companion templates such as `web-app-core` or `node-edge-core`, use GitHub links in docs rather than local filesystem assumptions
 
 ## Commands
 

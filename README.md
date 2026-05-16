@@ -104,6 +104,8 @@ This is one of three reusable service templates. They share API conventions and 
 
 Product apps are created *from* these templates and then diverge freely with domain logic. They're designed to work together — a frontend built from web-app-core calls a backend API built from elixir-api-core, while edge services built from node-edge-core handle integrations.
 
+This repo is intended to work as a standalone starting point. It does not require the companion templates to exist locally in the same directory. If you want to pair it with the related frontend or edge templates, use the GitHub repos above rather than assuming a shared workspace layout.
+
 ## Project Status
 
 See `CHANGELOG.md` for the versioned task tracker.
